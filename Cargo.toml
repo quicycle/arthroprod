@@ -1,0 +1,6 @@
+[package]
+name = "ar_prod"
+version = "0.1.0"
+authors = ["sminez <innes@cocoon.life>"]
+
+[dependencies]
