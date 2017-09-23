@@ -121,25 +121,9 @@ impl Index {
 }
 
 impl Component {
-    pub fn to_vec(&self) -> Vec<Index> {
-        match *self {
-            Component::Vector(i) => vec![i],
-            Component::Bivector(i, j) => vec![i, j],
-            Component::Trivector(i, j, k) => vec![i, j, k],
-            Component::Quadrivector(i, j, k, l) => vec![i, j, k, l],
-            Component::Point => vec![],
-        }
-    }
-}
-
-impl Alpha {
-    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>)
-        -> Result<Alpha, &'a str> {
+    pub fn new<'a>(ix: &'a str, allowed: &HashSet<Component>) -> Result<Component, &'a str> {
         if ix == "p" {
-            return Ok(Alpha {
-                index: Component::Point,
-                sign,
-            });
+            return Ok(Component::Point);
         }
 
         let v: Vec<&str> = ix.split("")
@@ -175,13 +159,29 @@ impl Alpha {
         if !allowed.contains(&index) {
             return Err("Invalid index provided");
         }
+        Ok(index)
+    }
+
+    // TODO :: look at https://doc.rust-lang.org/std/convert/trait.Into.html
+    pub fn to_vec(&self) -> Vec<Index> {
+        match *self {
+            Component::Vector(i) => vec![i],
+            Component::Bivector(i, j) => vec![i, j],
+            Component::Trivector(i, j, k) => vec![i, j, k],
+            Component::Quadrivector(i, j, k, l) => vec![i, j, k, l],
+            Component::Point => vec![],
+        }
+    }
+}
+
+impl Alpha {
+    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>)
+        -> Result<Alpha, &'a str> {
+        let index = Component::new(ix, allowed)?;
         Ok(Alpha { index, sign })
     }
 
     pub fn is_point(&self) -> bool {
-        match self.index {
-            Component::Point => true,
-            _ => false,
-        }
+        self.index == Component::Point
     }
 }
