@@ -1,5 +1,6 @@
-.: Arthroprod :: Compute products under Absolute Relativity :.
-==============================================================
+.: Arthroprod :.
+================
+_Compute products under Absolute Relativity._
 
 Copyright (C) 2016-2017 Innes D. Anderson-Morrison All rights reserved.
 
