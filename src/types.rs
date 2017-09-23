@@ -123,11 +123,8 @@ impl Component {
 }
 
 impl Alpha {
-    pub fn new<'a>(
-        ix: &'a str,
-        sign: Sign,
-        allowed: &HashSet<Component>,
-    ) -> Result<Alpha, &'a str> {
+    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>)
+        -> Result<Alpha, &'a str> {
         if ix == "p" {
             return Ok(Alpha {
                 index: Component::Point,

@@ -40,26 +40,18 @@ pub fn combine_signs(i: &Sign, j: &Sign) -> Sign {
     if i == j { Sign::Pos } else { Sign::Neg }
 }
 
-pub fn find_prod(
-    i: &Alpha,
-    j: &Alpha,
-    metric: &HashMap<Index, Sign>,
-    targets: &HashMap<KeyVec, Component>,
-) -> Alpha {
+pub fn find_prod(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>)
+    -> Alpha {
     let mut sign = combine_signs(&i.sign, &j.sign);
 
     // Rule (1) :: Multiplication by αp is idempotent
     if i.is_point() {
-        return Alpha {
-            index: j.index.clone(),
-            sign,
-        };
+        let index = j.index.clone();
+        return Alpha { index, sign };
     };
     if j.is_point() {
-        return Alpha {
-            index: i.index.clone(),
-            sign,
-        };
+        let index = i.index.clone();
+        return Alpha { index, sign };
     };
 
     // Rule (2) :: Squaring and popping
@@ -112,30 +104,22 @@ pub fn find_prod(
     // If everything cancelled then i == j and we are left with αp.
     // If we are left with a single index then there is nothing to pop.
     if components.len() == 0 {
-        return Alpha {
-            index: Component::Point,
-            sign,
-        };
+        let index = Component::Point;
+        return Alpha { index, sign };
     } else if components.len() == 1 {
-        return Alpha {
-            index: Component::Vector(components[0]),
-            sign,
-        };
+        let index = Component::Vector(components[0]);
+        return Alpha { index, sign };
     }
 
     // Rule (3) :: Popping to the correct order
-    let target = match targets.get(&KeyVec::new(components.clone())) {
-        Some(t) => t,
-        None => panic!("Shouldn't ever get here!"),
-    };
-    let target_vec = target.to_vec();
+    let index = targets.get(&KeyVec::new(components.clone()))
+                       .expect("Target should always be in targets.")
+                       .clone();
+    let target_vec = index.to_vec();
 
     // If we are already in the correct order then we're done.
     if target_vec == components {
-        return Alpha {
-            index: target.clone(),
-            sign,
-        };
+        return Alpha { index, sign };
     }
 
     // Get the current ordering and then compute pops to correct
@@ -163,8 +147,6 @@ pub fn find_prod(
                          .collect();
     }
 
-    return Alpha {
-        index: target.clone(),
-        sign,
-    };
+    // Now that the sign is correct we can return
+    Alpha { index, sign }
 }
