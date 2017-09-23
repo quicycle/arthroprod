@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use std::ops::Mul;
 
 /// A vector that is hashed based on it's sorted order.
 #[derive(Eq, PartialEq, Debug, Clone)]
@@ -28,13 +27,7 @@ impl Hash for KeyVec {
 // .: Types :. //
 /////////////////
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
-pub enum Sign {
-    Pos,
-    Neg,
-}
-
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Copy, Ord, PartialOrd)]
+#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
 pub enum Index {
     Zero,
     One,
@@ -49,6 +42,12 @@ pub enum Component {
     Bivector(Index, Index),
     Trivector(Index, Index, Index),
     Quadrivector(Index, Index, Index, Index),
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum Sign {
+    Pos,
+    Neg,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -98,15 +97,6 @@ impl fmt::Display for Alpha {
 ///////////////////////////////////////
 // .: Type Method Implementations :. //
 ///////////////////////////////////////
-
-// Allow signs to be multiplied
-impl Mul<Sign> for Sign {
-    type Output = Sign;
-
-    fn mul(self, _rhs: Sign) -> Sign {
-        if self == _rhs { Sign::Pos } else { Sign::Neg }
-    }
-}
 
 impl Index {
     pub fn try_from_str(s: &str) -> Result<Index, &str> {

@@ -36,11 +36,15 @@
 use super::types::{Alpha, Component, Index, KeyVec, Sign};
 use std::collections::HashMap;
 
+pub fn combine_signs(i: &Sign, j: &Sign) -> Sign {
+    if i == j { Sign::Pos } else { Sign::Neg }
+}
+
 pub fn find_prod(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>)
     -> Alpha {
-    let mut sign = i.sign * j.sign;
+    let mut sign = combine_signs(&i.sign, &j.sign);
 
-    // Rule (1) :: Multiplication by αp is idempotent (modulo sign change)
+    // Rule (1) :: Multiplication by αp is idempotent
     if i.is_point() {
         let index = j.index.clone();
         return Alpha { index, sign };
@@ -89,9 +93,9 @@ pub fn find_prod(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &
             Sign::Pos
         };
         // Update sign due to pops
-        sign = sign * pop_sign;
+        sign = combine_signs(&sign, &pop_sign);
         // Update sign due to cancellation under the metric
-        sign = sign * metric[repeat];
+        sign = combine_signs(&sign, &metric[repeat]);
         // Remove the repeated elements
         components.remove(second);
         components.remove(first);
@@ -129,7 +133,7 @@ pub fn find_prod(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &
 
     while current.len() > 1 {
         if current[0] % 2 == 0 {
-            sign = sign * Sign::Neg;
+            sign = combine_signs(&sign, &Sign::Neg);
         }
         current.remove(0);
         let mut new_ordering = HashMap::new();
