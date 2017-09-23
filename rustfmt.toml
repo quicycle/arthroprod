@@ -4,3 +4,11 @@ reorder_imports = true
 reorder_imports_in_group = true
 reorder_imported_names = true
 wrap_comments = true
+fn_args_density = "Compressed"
+report_todo = "Always"
+struct_lit_multiline_style = "PreferSingle"
+stuct_lit_width = 50
+struct_variant_width = 50
+use_try_shorthand = true
+struct_field_align_threshold = 20
+
