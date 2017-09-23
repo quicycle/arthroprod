@@ -3,7 +3,7 @@
 
 Copyright (C) 2016-2017 Innes D. Anderson-Morrison All rights reserved.
 
-[Cayley Table for the Williamson Algebra](cayley.png)
+![Cayley Table for the Williamson Algebra](cayley.png)
 
 This is a Rust re-implementation of the Python framework [arpy](https://github.com/sminez/arpy).
 It is intended to provide better confidence in the correctness of the algorithms
