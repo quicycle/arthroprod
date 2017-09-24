@@ -78,9 +78,7 @@ impl fmt::Display for Component {
             Component::Vector(ref i) => write!(f, "{}", i),
             Component::Bivector(ref i, ref j) => write!(f, "{}{}", i, j),
             Component::Trivector(ref i, ref j, ref k) => write!(f, "{}{}{}", i, j, k),
-            Component::Quadrivector(ref i, ref j, ref k, ref l) => {
-                write!(f, "{}{}{}{}", i, j, k, l)
-            }
+            Component::Quadrivector(ref i, ref j, ref k, ref l) => write!(f, "{}{}{}{}", i, j, k, l),
         }
     }
 }
@@ -165,8 +163,7 @@ impl Component {
 }
 
 impl Alpha {
-    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>)
-        -> Result<Alpha, &'a str> {
+    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>) -> Result<Alpha, &'a str> {
         let index = Component::new(ix, allowed)?;
         Ok(Alpha { index, sign })
     }

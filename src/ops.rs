@@ -40,8 +40,7 @@ pub fn combine_signs(i: &Sign, j: &Sign) -> Sign {
     if i == j { Sign::Pos } else { Sign::Neg }
 }
 
-pub fn find_prod(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>)
-    -> Alpha {
+pub fn find_prod(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>) -> Alpha {
     let mut sign = combine_signs(&i.sign, &j.sign);
 
     // Rule (1) :: Multiplication by αp is idempotent

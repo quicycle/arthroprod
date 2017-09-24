@@ -25,3 +25,5 @@ TODO
 - [ ] Differentials
 - [ ] CLI interface for computing products 
 - [ ] Parsing of calculation files
+- [ ] Look at quickcheck: https://github.com/BurntSushi/quickcheck
+- [ ] Look at clap: https://github.com/kbknapp/clap-rs
