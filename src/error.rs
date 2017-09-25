@@ -1,4 +1,3 @@
-use super::consts::ALLOWED;
 use std::error::Error;
 use std::fmt;
 
@@ -22,9 +21,9 @@ impl Error for ArError {
 impl fmt::Display for ArError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ArError::InvalidIndex(i) => write!(f, "The index provided was not one of 0, 1, 2 or 3: {}", i),
-            ArError::InvalidComponentOrder(c) => write!(f, "Attempt to construct a component of order > 4: {}", c),
-            ArError::ComponentNotAllowed(c) => write!(f, "Attempt to use invalid component: {}", c),
+            ArError::InvalidIndex(ref i) => write!(f, "The index provided was not one of 0, 1, 2 or 3: {}", i),
+            ArError::InvalidComponentOrder(ref c) => write!(f, "Attempt to construct a component of order > 4: {}", c),
+            ArError::ComponentNotAllowed(ref c) => write!(f, "Attempt to use invalid component: {}", c),
         }
     }
 }

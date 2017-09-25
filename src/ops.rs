@@ -33,6 +33,7 @@
 /// will take an odd number of pops to correctly position it. We can then look
 /// only at the remaining elements and re-label them with indices 1->(n-1) and
 /// repeat the process until we are done.
+use super::consts::{METRIC, TARGETS};
 use super::types::{Alpha, Component, Index, KeyVec, Sign};
 use std::collections::HashMap;
 
@@ -40,7 +41,14 @@ pub fn combine_signs(i: &Sign, j: &Sign) -> Sign {
     if i == j { Sign::Pos } else { Sign::Neg }
 }
 
-pub fn find_prod(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>) -> Alpha {
+/// Compute the product of two alphas. Use find_prod_override for providing a
+/// custom metric and target alpha set.
+pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
+    find_prod_override(i, j, &METRIC, &TARGETS)
+}
+
+/// Allow the caller to specify a different metric and set of target alphas.
+pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>) -> Alpha {
     let mut sign = combine_signs(&i.sign, &j.sign);
 
     // Rule (1) :: Multiplication by αp is idempotent

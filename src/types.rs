@@ -1,3 +1,4 @@
+use super::consts::ALLOWED;
 use {ArError, Result};
 use std::collections::HashSet;
 use std::fmt;
@@ -110,7 +111,7 @@ impl Index {
 }
 
 impl Component {
-    pub fn new<'a>(ix: &str, allowed: &HashSet<Component>) -> Result<Component> {
+    pub fn new(ix: &str, allowed: &HashSet<Component>) -> Result<Component> {
         if ix == "p" {
             return Ok(Component::Point);
         }
@@ -164,7 +165,26 @@ impl Component {
 }
 
 impl Alpha {
-    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>) -> Result<Alpha> {
+    /// new will create a new alpha from an string index containing an optional
+    /// sign prefix.
+    pub fn new(ix: &str) -> Alpha {
+        let sign = match ix.starts_with("-") {
+            true => Sign::Neg,
+            false => Sign::Pos,
+        };
+
+        let ix = ix.trim_matches('-');
+
+        let index = match Component::new(ix, &ALLOWED) {
+            Ok(i) => i,
+            Err(_) => panic!("Managed to create invalid alpha from defaults."),
+        };
+        Alpha { index, sign }
+    }
+
+    /// new_override allows the caller to explicitly specify an index, sign and
+    /// allowed set of alphas when creating an alpha.
+    pub fn new_override(ix: &str, sign: Sign, allowed: &HashSet<Component>) -> Result<Alpha> {
         let index = Component::new(ix, allowed)?;
         Ok(Alpha { index, sign })
     }
