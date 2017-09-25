@@ -30,3 +30,6 @@ struct_lit_multiline_style = "PreferSingle"
 
 # Replace calls to the try! macro with ? syntax
 use_try_shorthand = true
+
+# Allow for full width function calls
+fn_call_width = 70

@@ -1,3 +1,4 @@
+use {ArError, Result};
 use std::collections::HashSet;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -97,19 +98,19 @@ impl fmt::Display for Alpha {
 ///////////////////////////////////////
 
 impl Index {
-    pub fn try_from_str(s: &str) -> Result<Index, &str> {
+    pub fn try_from_str(s: &str) -> Result<Index> {
         match s {
             "0" => Ok(Index::Zero),
             "1" => Ok(Index::One),
             "2" => Ok(Index::Two),
             "3" => Ok(Index::Three),
-            &_ => Err("Invalid index"),
+            &_ => Err(ArError::InvalidIndex(String::from(s))),
         }
     }
 }
 
 impl Component {
-    pub fn new<'a>(ix: &'a str, allowed: &HashSet<Component>) -> Result<Component, &'a str> {
+    pub fn new<'a>(ix: &str, allowed: &HashSet<Component>) -> Result<Component> {
         if ix == "p" {
             return Ok(Component::Point);
         }
@@ -141,11 +142,11 @@ impl Component {
                 let i4 = Index::try_from_str(v[3])?;
                 Component::Quadrivector(i1, i2, i3, i4)
             }
-            _ => return Err("A component has at most 4 indices."),
+            _ => return Err(ArError::InvalidComponentOrder(String::from(ix))),
         };
 
         if !allowed.contains(&index) {
-            return Err("Invalid index provided");
+            return Err(ArError::ComponentNotAllowed(String::from(ix)));
         }
         Ok(index)
     }
@@ -163,7 +164,7 @@ impl Component {
 }
 
 impl Alpha {
-    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>) -> Result<Alpha, &'a str> {
+    pub fn new<'a>(ix: &'a str, sign: Sign, allowed: &HashSet<Component>) -> Result<Alpha> {
         let index = Component::new(ix, allowed)?;
         Ok(Alpha { index, sign })
     }
