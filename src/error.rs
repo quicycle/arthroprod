@@ -12,6 +12,9 @@ pub enum ArError {
     InvalidComponentOrder(String),
     /// The component provided is not a member of ALLOWED.
     ComponentNotAllowed(String),
+    /// There was an attempt to create an invalid config variable (ALLOWED,
+    /// METRIC, TARGETS).
+    InvalidConfig(String),
 }
 
 impl Error for ArError {
@@ -26,6 +29,7 @@ impl fmt::Display for ArError {
             ArError::InvalidIndex(ref i) => write!(f, "The index provided was not one of 0, 1, 2 or 3: {}", i),
             ArError::InvalidComponentOrder(ref c) => write!(f, "Attempt to construct a component of order > 4: {}", c),
             ArError::ComponentNotAllowed(ref c) => write!(f, "Attempt to use invalid component: {}", c),
+            ArError::InvalidConfig(ref s) => write!(f, "Attempt to create invalid config variable: {}", s),
         }
     }
 }

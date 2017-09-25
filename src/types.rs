@@ -7,12 +7,17 @@ use std::collections::HashSet;
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
-/// A vector that is hashed based on it's sorted order.
 #[derive(Eq, PartialEq, Debug, Clone)]
+/// A vector that is hashed based on it's sorted order.
 pub struct KeyVec(Vec<Index>);
 
 impl KeyVec {
+    /// Generate a new KeyVec from a vector of indices.
+    ///
+    /// The elements are sorted when the KeyVec is created.
     pub fn new(v: Vec<Index>) -> KeyVec {
+        let mut v = v.clone();
+        v.sort();
         KeyVec(v)
     }
 }
@@ -20,8 +25,6 @@ impl KeyVec {
 impl Hash for KeyVec {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let KeyVec(ref elems) = *self;
-        let mut elems = elems.clone();
-        elems.sort();
         for elem in elems.iter() {
             elem.hash(state);
         }
@@ -33,12 +36,32 @@ impl Hash for KeyVec {
 /////////////////
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
+/// A Sign can be positive or negative.
+///
+/// Ongoing work is being carried out to determine if this is expressive enough
+/// for the algebra or whether we need to individually track the sign of a
+/// component's magnitude, its handedness and its Alpha sign.
+///
+/// * magSign
+///
+/// * handSign
+///
+/// * uSign
+///
+/// The current implementation is to track Sign as a property of an Alpha and
+/// to move sign changes within magnitude and handedness into this signle
+/// representation when they occur.
 pub enum Sign {
     Pos,
     Neg,
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
+/// A single vector index of space or time.
+///
+/// The generators of the algebra are the standard (t, x, y, z) components of
+/// Euclidian Space. For ease of expression we denote them using numeric
+/// indices 0 through 3 with 0 representing the single time component.
 pub enum Index {
     Zero,
     One,
@@ -46,7 +69,19 @@ pub enum Index {
     Three,
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Clone)]
+#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
+/// An element of the algebra of order 0 through 4.
+///
+/// Components (along with an associated Sign) make up an Alpha value.
+/// Functionally, components are tuples of Indices and for ease of writing
+/// we denote higher order components in a contracted form:
+///
+/// ```ignore
+/// α1,α2 == α12
+/// α0,α2,α3 == α023
+/// ```
+///
+/// In Clifford Algebra terms, these are the Blades of the algebra.
 pub enum Component {
     Point,
     Vector(Index),
@@ -55,11 +90,15 @@ pub enum Component {
     Quadrivector(Index, Index, Index, Index),
 }
 
-/// The base element for computation with Absolute Relativity.
 #[derive(Debug, Eq, PartialEq)]
+/// The base element for computation with Absolute Relativity.
+///
+/// An Alpha is a Component along with an associated Sign. All values and
+/// mathematical operators within the algebra are required to be paired with
+/// their correct Alpha value under the principle of Absolute Relativity.
 pub struct Alpha {
-    pub index: Component,
-    pub sign: Sign,
+    index: Component,
+    sign: Sign,
 }
 
 ////////////////////////////////////////
@@ -111,6 +150,9 @@ impl Sign {
 }
 
 impl Index {
+    /// Try to parse a string as an Index.
+    ///
+    /// Only values of 0, 1, 2 or 3 will succeed.
     pub fn try_from_str(s: &str) -> Result<Index> {
         match s {
             "0" => Ok(Index::Zero),
@@ -123,7 +165,18 @@ impl Index {
 }
 
 impl Component {
+    /// Construct a new Component and verify that it is an allowed element of
+    /// the algebra.
     pub fn new(ix: &str, allowed: &HashSet<Component>) -> Result<Component> {
+        let index = Component::unsafe_new(ix)?;
+        if !allowed.contains(&index) {
+            return Err(ArError::ComponentNotAllowed(String::from(ix)));
+        }
+        Ok(index)
+    }
+
+    /// Construct a new Component without verification.
+    pub fn unsafe_new(ix: &str) -> Result<Component> {
         if ix == "p" {
             return Ok(Component::Point);
         }
@@ -132,39 +185,35 @@ impl Component {
                              .filter(|&c| c != "")
                              .collect();
 
-        let index = match v.len() {
+        match v.len() {
             1 => {
                 let i = Index::try_from_str(v[0])?;
-                Component::Vector(i)
+                Ok(Component::Vector(i))
             }
             2 => {
                 let i1 = Index::try_from_str(v[0])?;
                 let i2 = Index::try_from_str(v[1])?;
-                Component::Bivector(i1, i2)
+                Ok(Component::Bivector(i1, i2))
             }
             3 => {
                 let i1 = Index::try_from_str(v[0])?;
                 let i2 = Index::try_from_str(v[1])?;
                 let i3 = Index::try_from_str(v[2])?;
-                Component::Trivector(i1, i2, i3)
+                Ok(Component::Trivector(i1, i2, i3))
             }
             4 => {
                 let i1 = Index::try_from_str(v[0])?;
                 let i2 = Index::try_from_str(v[1])?;
                 let i3 = Index::try_from_str(v[2])?;
                 let i4 = Index::try_from_str(v[3])?;
-                Component::Quadrivector(i1, i2, i3, i4)
+                Ok(Component::Quadrivector(i1, i2, i3, i4))
             }
             _ => return Err(ArError::InvalidComponentOrder(String::from(ix))),
-        };
-
-        if !allowed.contains(&index) {
-            return Err(ArError::ComponentNotAllowed(String::from(ix)));
         }
-        Ok(index)
     }
 
     // TODO :: look at https://doc.rust-lang.org/std/convert/trait.Into.html
+    /// Extract the indices of a component as a Vector.
     pub fn to_vec(&self) -> Vec<Index> {
         match *self {
             Component::Vector(i) => vec![i],
@@ -177,8 +226,11 @@ impl Component {
 }
 
 impl Alpha {
-    /// new will create a new alpha from an string index containing an optional
-    /// sign prefix.
+    /// create a new alpha from an string index containing an optional sign
+    /// prefix.
+    ///
+    /// NOTE: This will panic if the index is invalid in order to prevent the
+    /// user from running inconsistant calculations.
     pub fn new(ix: &str) -> Alpha {
         let sign = match ix.starts_with("-") {
             true => Sign::Neg,
@@ -187,7 +239,7 @@ impl Alpha {
 
         let ix = ix.trim_matches('-');
 
-        let index = match Component::new(ix, &ALLOWED) {
+        let index = match Component::new(ix, &ALLOWED.indices()) {
             Ok(i) => i,
             Err(_) => panic!("Managed to create invalid alpha from defaults."),
         };
@@ -201,8 +253,28 @@ impl Alpha {
         Ok(Alpha { index, sign })
     }
 
-    /// allows for checking to see if an alpha is +/-αp
+    /// Construct an Alpha explicitly from a Component and a Sign.
+    pub fn from_index(index: Component, sign: Sign) -> Alpha {
+        Alpha { index, sign }
+    }
+
+    /// Check to see if an alpha is +/-αp
     pub fn is_point(&self) -> bool {
         self.index == Component::Point
+    }
+
+    /// Return a copy of this Alpha's index
+    pub fn index(&self) -> Component {
+        self.index.clone()
+    }
+
+    /// Return a copy of this Alpha's sign
+    pub fn sign(&self) -> Sign {
+        self.sign.clone()
+    }
+
+    /// Return a Vector of Indices representing this Alpha's Indices
+    pub fn to_vec(&self) -> Vec<Index> {
+        self.index.to_vec()
     }
 }

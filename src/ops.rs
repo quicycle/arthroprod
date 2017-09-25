@@ -4,6 +4,7 @@
 //! function which computes the Full Product of two Alphas under the algebra.
 //! Override versions of some functions exist which allow the caller to specify
 //! custom values for ALLOWED, TARGETS, and METRIC.
+//!
 //! NOTE: Using the overrides will result in a panic! in cases where there would
 //! normally be an error. This is to prevent malformed calculations from being
 //! coerced into a valid Alpha value.
@@ -11,7 +12,8 @@
 //! In almost all cases you want to use the non-override functions which take
 //! their configuration from the constants defined in the `consts` module.
  
-use super::consts::{METRIC, TARGETS};
+use super::config::Allowed;
+use super::consts::{ALLOWED, METRIC};
 use super::types::{Alpha, Component, Index, KeyVec, Sign};
 use std::collections::HashMap;
 
@@ -59,16 +61,18 @@ use std::collections::HashMap;
 /// repeat the process until we are done.
 ///
 /// # Examples
-///
 /// ```
 /// use arthroprod::types::Alpha;
+/// use arthroprod::ops::find_prod;
 ///
 /// let a1 = Alpha::new("31");
 /// let a2 = Alpha::new("10");
-/// println!("{} ^ {} = {}", a1, a2, find_prod(&a1, &a2);
+///
+/// assert_eq!(find_prod(&a1, &a2), Alpha::new("-30"));
+/// assert_eq!(find_prod(&a1, &a1), Alpha::new("-p"));
 /// ```
 pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
-    find_prod_override(i, j, &METRIC, &TARGETS)
+    find_prod_override(i, j, &METRIC, &ALLOWED)
 }
 
 /// Allow the caller to specify a different metric and set of target alphas
@@ -76,22 +80,37 @@ pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
 ///
 /// This implementation will panic! if the resulting Alpha is not in the
 /// supplied `targets` HashMap.
-pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>) -> Alpha {
-    let mut sign = i.sign.combine_with(&j.sign);
+///
+/// # Examples
+/// ```
+/// use arthroprod::types::Alpha;
+/// use arthroprod::ops::find_prod;
+///
+/// let a1 = Alpha::new("31");
+/// let a2 = Alpha::new("10");
+///
+/// assert_eq!(find_prod_override(&a1, &a2, &metric, &targets),
+/// Alpha::new("-30"));
+/// assert_eq!(find_prod_override(&a1, &a1, &metric, &targets),
+/// Alpha::new("-p"));
+/// ```
+pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, allowed: &Allowed) -> Alpha {
+    let targets = allowed.targets();
+    let mut sign = i.sign().combine_with(&j.sign());
 
     // Rule (1) :: Multiplication by αp is idempotent
     if i.is_point() {
-        let index = j.index.clone();
-        return Alpha { index, sign };
+        let index = j.index();
+        return Alpha::from_index(index, sign);
     };
     if j.is_point() {
-        let index = i.index.clone();
-        return Alpha { index, sign };
+        let index = i.index();
+        return Alpha::from_index(index, sign);
     };
 
     // Rule (2) :: Squaring and popping
-    let i_comps = i.index.to_vec();
-    let j_comps = j.index.to_vec();
+    let i_comps = i.to_vec();
+    let j_comps = j.to_vec();
     let mut intersection = vec![];
 
     // Find the repeated components in the combined indices
@@ -103,14 +122,14 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, t
 
     // Combine into a single vector
     let mut components = i_comps.clone();
-    components.append(&mut j.index.to_vec());
+    components.append(&mut j.to_vec());
 
     // Find out how far apart the repeated indices are, remove them and then adjust
     // the sign accordingly.
     for repeat in intersection.iter() {
         let mut first = 0;
         let mut second = 0;
-        let mut first_index = false;
+        let mut first_index = true;
         for (i, comp) in components.iter().enumerate() {
             if comp == *repeat {
                 if first_index {
@@ -140,21 +159,24 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, t
     // If we are left with a single index then there is nothing to pop.
     if components.len() == 0 {
         let index = Component::Point;
-        return Alpha { index, sign };
+        return Alpha::from_index(index, sign);
     } else if components.len() == 1 {
         let index = Component::Vector(components[0]);
-        return Alpha { index, sign };
+        return Alpha::from_index(index, sign);
     }
 
     // Rule (3) :: Popping to the correct order
     let index = targets.get(&KeyVec::new(components.clone()))
-                       .expect("Target should always be in TARGETS.")
+                       .expect(&format!(
+        "Target [{:?}] should always be in TARGETS.",
+        components
+    ))
                        .clone();
     let target_vec = index.to_vec();
 
     // If we are already in the correct order then we're done.
     if target_vec == components {
-        return Alpha { index, sign };
+        return Alpha::from_index(index, sign);
     }
 
     // Get the current ordering and then compute pops to correct
@@ -183,5 +205,5 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, t
     }
 
     // Now that the sign is correct we can return
-    Alpha { index, sign }
+    return Alpha::from_index(index, sign);
 }
