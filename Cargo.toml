@@ -3,8 +3,14 @@ name = "arthroprod"
 version = "0.1.1"
 authors = ["sminez <innes@cocoon.life>"]
 
+[[bin]]
+doc = false
+name = "ar"
+path = "src/bin/main.rs"
+
 [dependencies]
 lazy_static = "0.2"
 
 [dev-dependencies]
-quickcheck = "0.4.1"
+proptest = "0.3.1"
+# quickcheck = "0.4.1"
