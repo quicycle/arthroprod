@@ -26,3 +26,4 @@ TODO
 - [ ] CLI interface for computing products 
 - [ ] Parsing of calculation files
 - [ ] Look at clap: https://github.com/kbknapp/clap-rs
+- [ ] Look at proptest: https://github.com/altsysrq/proptest
