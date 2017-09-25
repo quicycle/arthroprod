@@ -1,3 +1,6 @@
+//! Base types for carrying out calculations within the Absolute Relativity
+//! framework.
+
 use super::consts::ALLOWED;
 use {ArError, Result};
 use std::collections::HashSet;
@@ -29,6 +32,12 @@ impl Hash for KeyVec {
 // .: Types :. //
 /////////////////
 
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+pub enum Sign {
+    Pos,
+    Neg,
+}
+
 #[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
 pub enum Index {
     Zero,
@@ -46,12 +55,7 @@ pub enum Component {
     Quadrivector(Index, Index, Index, Index),
 }
 
-#[derive(Debug, Eq, PartialEq)]
-pub enum Sign {
-    Pos,
-    Neg,
-}
-
+/// The base element for computation with Absolute Relativity.
 #[derive(Debug, Eq, PartialEq)]
 pub struct Alpha {
     pub index: Component,
@@ -97,6 +101,14 @@ impl fmt::Display for Alpha {
 ///////////////////////////////////////
 // .: Type Method Implementations :. //
 ///////////////////////////////////////
+
+impl Sign {
+    /// Combine two signs (positive, negative) and return their product under
+    /// the standard rules of arithmetic.
+    pub fn combine_with(&self, j: &Sign) -> Sign {
+        if self == j { Sign::Pos } else { Sign::Neg }
+    }
+}
 
 impl Index {
     pub fn try_from_str(s: &str) -> Result<Index> {
@@ -189,6 +201,7 @@ impl Alpha {
         Ok(Alpha { index, sign })
     }
 
+    /// allows for checking to see if an alpha is +/-αp
     pub fn is_point(&self) -> bool {
         self.index == Component::Point
     }

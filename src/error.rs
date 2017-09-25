@@ -1,7 +1,9 @@
+//! Custom errors and associated formatting
+
 use std::error::Error;
 use std::fmt;
 
-/// Errors that can be thrown in arthroprod
+/// Errors that can be returned by arthroprod functions to external callers.
 #[derive(Debug)]
 pub enum ArError {
     /// The index passed was not one of 0, 1, 2 or 3.

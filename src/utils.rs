@@ -1,9 +1,11 @@
+//! Utility functions for use within the rest of arthroprod.
+
 use super::types::{Component, Index, KeyVec, Sign};
 use std::collections::{HashMap, HashSet};
 
 
-// TODO :: change to make_allowed_and_targets(a: Vec<&str>) for custom
-// allowed from user input
+/// TODO :: change to make_allowed_and_targets(a: Vec<&str>) for custom
+/// allowed from user input
 pub fn get_allowed() -> HashSet<Component> {
     let mut allowed = HashSet::new();
     allowed.insert(Component::Point);
@@ -30,8 +32,8 @@ pub fn get_allowed() -> HashSet<Component> {
     return allowed;
 }
 
-// TODO :: change to make_allowed_and_targets(a: Vec<&str>) for custom
-// allowed from user input
+/// TODO :: change to make_allowed_and_targets(a: Vec<&str>) for custom
+/// allowed from user input
 pub fn get_targets(allowed: &HashSet<Component>) -> HashMap<KeyVec, Component> {
     let mut targets = HashMap::new();
     for s in allowed.iter() {
@@ -42,7 +44,7 @@ pub fn get_targets(allowed: &HashSet<Component>) -> HashMap<KeyVec, Component> {
     return targets;
 }
 
-// TODO :: change to make_metric(s: &str)
+/// TODO :: change to make_metric(s: &str)
 pub fn get_metric() -> HashMap<Index, Sign> {
     let mut metric = HashMap::new();
     metric.insert(Index::Zero, Sign::Pos);

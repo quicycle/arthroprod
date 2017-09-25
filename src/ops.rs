@@ -1,5 +1,25 @@
-/// Algorithm taken from arpy (Absolute Relativity in Python)
-/// Copyright (C) 2016-2017 Innes D. Anderson-Morrison All rights reserved.
+//! Standard operations on AR types: Alphas and Multivectors.
+//!
+//! Almost all of the operations contained in `ops` are based on the find_prod
+//! function which computes the Full Product of two Alphas under the algebra.
+//! Override versions of some functions exist which allow the caller to specify
+//! custom values for ALLOWED, TARGETS, and METRIC.
+//! NOTE: Using the overrides will result in a panic! in cases where there would
+//! normally be an error. This is to prevent malformed calculations from being
+//! coerced into a valid Alpha value.
+//!
+//! In almost all cases you want to use the non-override functions which take
+//! their configuration from the constants defined in the `consts` module.
+ 
+use super::consts::{METRIC, TARGETS};
+use super::types::{Alpha, Component, Index, KeyVec, Sign};
+use std::collections::HashMap;
+
+/// Compute the product of two alphas.
+///
+/// Use find_prod_override for providing a custom metric and target alpha set.
+/// Algorithm taken from arpy (Absolute Relativity in Python) Copyright (C)
+/// 2016-2017 Innes D. Anderson-Morrison All rights reserved.
 ///
 /// Multiplying αs
 /// ==============
@@ -9,12 +29,16 @@
 ///
 /// (1)   αpμ == αμp == αμ
 ///     'Multiplication by αp (r-point) is idempotent. (αp is the identity)'
+///
 /// (2i)  α0^2 == αp
 ///     'Repeated α0 indices can just be removed.'
+///
 /// (2ii) αi^2 == -αp
 ///     'Repeated αi indices can be removed by negating'
+///
 /// (2iii) α^2 == +-αp
 ///     'All elements square to either +αp or -αp'
+///
 /// (3)   αμν == -ανμ
 ///     'Adjacent indices can be popped by negating.'
 ///
@@ -33,23 +57,27 @@
 /// will take an odd number of pops to correctly position it. We can then look
 /// only at the remaining elements and re-label them with indices 1->(n-1) and
 /// repeat the process until we are done.
-use super::consts::{METRIC, TARGETS};
-use super::types::{Alpha, Component, Index, KeyVec, Sign};
-use std::collections::HashMap;
-
-pub fn combine_signs(i: &Sign, j: &Sign) -> Sign {
-    if i == j { Sign::Pos } else { Sign::Neg }
-}
-
-/// Compute the product of two alphas. Use find_prod_override for providing a
-/// custom metric and target alpha set.
+///
+/// # Examples
+///
+/// ```
+/// use arthroprod::types::Alpha;
+///
+/// let a1 = Alpha::new("31");
+/// let a2 = Alpha::new("10");
+/// println!("{} ^ {} = {}", a1, a2, find_prod(&a1, &a2);
+/// ```
 pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
     find_prod_override(i, j, &METRIC, &TARGETS)
 }
 
-/// Allow the caller to specify a different metric and set of target alphas.
+/// Allow the caller to specify a different metric and set of target alphas
+/// when computing a product.
+///
+/// This implementation will panic! if the resulting Alpha is not in the
+/// supplied `targets` HashMap.
 pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, targets: &HashMap<KeyVec, Component>) -> Alpha {
-    let mut sign = combine_signs(&i.sign, &j.sign);
+    let mut sign = i.sign.combine_with(&j.sign);
 
     // Rule (1) :: Multiplication by αp is idempotent
     if i.is_point() {
@@ -100,9 +128,9 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, t
             Sign::Pos
         };
         // Update sign due to pops
-        sign = combine_signs(&sign, &pop_sign);
+        sign = sign.combine_with(&pop_sign);
         // Update sign due to cancellation under the metric
-        sign = combine_signs(&sign, &metric[repeat]);
+        sign = sign.combine_with(&metric[repeat]);
         // Remove the repeated elements
         components.remove(second);
         components.remove(first);
@@ -120,7 +148,7 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, t
 
     // Rule (3) :: Popping to the correct order
     let index = targets.get(&KeyVec::new(components.clone()))
-                       .expect("Target should always be in targets.")
+                       .expect("Target should always be in TARGETS.")
                        .clone();
     let target_vec = index.to_vec();
 
@@ -140,7 +168,7 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, t
 
     while current.len() > 1 {
         if current[0] % 2 == 0 {
-            sign = combine_signs(&sign, &Sign::Neg);
+            sign = sign.combine_with(&Sign::Neg);
         }
         current.remove(0);
         let mut new_ordering = HashMap::new();

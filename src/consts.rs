@@ -1,4 +1,4 @@
-// Constants and config options that are used to define the algebra.
+//! Constants and config options that are used to define the algebra.
 
 use super::types::{Component, Index, KeyVec, Sign};
 use std::collections::{HashMap, HashSet};

@@ -32,4 +32,4 @@ struct_lit_multiline_style = "PreferSingle"
 use_try_shorthand = true
 
 # Allow for full width function calls
-fn_call_width = 70
+fn_call_width = 60
