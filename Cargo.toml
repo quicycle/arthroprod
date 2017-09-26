@@ -7,6 +7,9 @@ license-file = "LICENSE"
 repository = "https://github.com/sminez/arthroprod"
 documentation = "https://docs.rs/arthroprod"
 readme = "README.md"
+description = """
+Clifford Algebra based computation for the theory of Absolute Relativity.
+"""
 
 [[bin]]
 doc = false
