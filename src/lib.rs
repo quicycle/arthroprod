@@ -12,6 +12,11 @@
 #[macro_use]
 extern crate lazy_static;
 
+#[cfg(test)]
+#[macro_use]
+extern crate proptest;
+
+
 pub mod config;
 pub mod consts;
 pub mod types;

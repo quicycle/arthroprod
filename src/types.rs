@@ -90,7 +90,7 @@ pub enum Component {
     Quadrivector(Index, Index, Index, Index),
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 /// The base element for computation with Absolute Relativity.
 ///
 /// An Alpha is a Component along with an associated Sign. All values and

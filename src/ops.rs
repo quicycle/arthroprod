@@ -66,9 +66,9 @@ use std::collections::HashMap;
 /// use arthroprod::ops::find_prod;
 ///
 /// let a1 = Alpha::new("31");
-/// let a2 = Alpha::new("10");
+/// let a2 = Alpha::new("01");
 ///
-/// assert_eq!(find_prod(&a1, &a2), Alpha::new("-30"));
+/// assert_eq!(find_prod(&a1, &a2), Alpha::new("-03"));
 /// assert_eq!(find_prod(&a1, &a1), Alpha::new("-p"));
 /// ```
 pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
@@ -84,14 +84,15 @@ pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
 /// # Examples
 /// ```
 /// use arthroprod::types::Alpha;
-/// use arthroprod::ops::find_prod;
+/// use arthroprod::ops::find_prod_override;
+/// use arthroprod::consts::{ALLOWED, METRIC};
 ///
 /// let a1 = Alpha::new("31");
-/// let a2 = Alpha::new("10");
+/// let a2 = Alpha::new("01");
 ///
-/// assert_eq!(find_prod_override(&a1, &a2, &metric, &targets),
-/// Alpha::new("-30"));
-/// assert_eq!(find_prod_override(&a1, &a1, &metric, &targets),
+/// assert_eq!(find_prod_override(&a1, &a2, &METRIC, &ALLOWED),
+/// Alpha::new("-03"));
+/// assert_eq!(find_prod_override(&a1, &a1, &METRIC, &ALLOWED),
 /// Alpha::new("-p"));
 /// ```
 pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, allowed: &Allowed) -> Alpha {
@@ -167,10 +168,7 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
 
     // Rule (3) :: Popping to the correct order
     let index = targets.get(&KeyVec::new(components.clone()))
-                       .expect(&format!(
-        "Target [{:?}] should always be in TARGETS.",
-        components
-    ))
+                       .expect(&format!("{:?} not in TARGETS.", components))
                        .clone();
     let target_vec = index.to_vec();
 
@@ -184,7 +182,7 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     for (i, c) in target_vec.iter().enumerate() {
         target_ordering.insert(c, i as u8 + 1);
     }
-    let mut current: Vec<u8> = target_vec.iter()
+    let mut current: Vec<u8> = components.iter()
                                          .map(|e| *target_ordering.get(e).expect("fail"))
                                          .collect();
 
@@ -206,4 +204,117 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
 
     // Now that the sign is correct we can return
     return Alpha::from_index(index, sign);
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::super::consts::ALPHAS;
+    // use proptest::prelude::*;
+
+    lazy_static! {
+        static ref POINT: Alpha = Alpha::new("p");
+        static ref NEG_POINT: Alpha = Alpha::new("-p");
+    }
+
+    const INDICES: [&str; 4] = ["0", "1", "2", "3"];
+    const STR_SIGNS: [&str; 2] = ["", "-"];
+
+    // const ALPHA_REGEX: &str = "-?[0123]{1,4}|-?p";
+
+    proptest! {
+        #[test]
+        /// The product of an alpha with itself is always +/-αp
+        fn squaring_is_always_ap(ref ix in 0..16, ref s in 0..2) {
+            let ix = ALPHAS[*ix as usize];
+            let s = STR_SIGNS[*s as usize];
+            let i = Alpha::new(&format!("{}{}", s, ix));
+            let res = find_prod(&i, &i).index();
+
+            prop_assert_eq!(res, Component::Point);
+        }
+
+        #[test]
+        /// Multiplication by αp should always be idempotent
+        fn ap_is_idempotent(ref ix in 0..16, ref s in 0..2) {
+            let ix = ALPHAS[*ix as usize];
+            let s = STR_SIGNS[*s as usize];
+            let i = Alpha::new(&format!("{}{}", s, ix));
+            let res = find_prod(&i, &POINT);
+
+            prop_assert_eq!(res, i);
+        }
+
+        #[test]
+        /// Multiplication by αp should always be idempotent
+        fn neg_ap_negates(ref ix in 0..16, ref s in 0..2) {
+            let ix = ALPHAS[*ix as usize];
+            let s = STR_SIGNS[*s as usize];
+            let i = Alpha::new(&format!("{}{}", s, ix));
+            let res = find_prod(&i, &NEG_POINT);
+
+            prop_assert_eq!(res.index(), i.index());
+            prop_assert_ne!(res.sign(), i.sign());
+        }
+
+        #[test]
+        /// Swapping two adjacent indices negates the product when not squaring
+        fn swap_ij(ref i in 0..4, ref j in 0..4, ref si in 0..2, ref sj in 0..2) {
+            // Squaring doesn't flip sign as both elements are equal
+            prop_assume!(i != j);
+
+            let i = INDICES[*i as usize];
+            let si = STR_SIGNS[*si as usize];
+            let i = Alpha::new(&format!("{}{}", si, i));
+
+            let j = INDICES[*j as usize];
+            let sj = STR_SIGNS[*sj as usize];
+            let j = Alpha::new(&format!("{}{}", sj, j));
+
+            let first = find_prod(&i, &j);
+            let second = find_prod(&j, &i);
+
+            prop_assert_eq!(first.index(), second.index());
+            prop_assert_ne!(first.sign(), second.sign());
+        }
+
+        #[test]
+        /// Swapping two adjacent indices negates the product when not squaring
+        fn swap_ijk(ref i in 0..4, ref j in 0..4, ref k in 0..4,
+                    ref si in 0..2, ref sj in 0..2, ref sk in 0..2) {
+            // Squaring doesn't flip sign as both elements are equal
+            prop_assume!(i != j && i != k && j != k);
+
+            let i = INDICES[*i as usize];
+            let si = STR_SIGNS[*si as usize];
+            let i = Alpha::new(&format!("{}{}", si, i));
+
+            let j = INDICES[*j as usize];
+            let sj = STR_SIGNS[*sj as usize];
+            let j = Alpha::new(&format!("{}{}", sj, j));
+
+            let k = INDICES[*k as usize];
+            let sk = STR_SIGNS[*sk as usize];
+            let k = Alpha::new(&format!("{}{}", sk, k));
+
+            // Should be equal to one another
+            let ijk = find_prod(&find_prod(&i, &j), &k);
+            let jki = find_prod(&find_prod(&j, &k), &i);
+            let kij = find_prod(&find_prod(&k, &i), &j);
+            prop_assert_eq!(ijk.clone(), jki.clone());
+            prop_assert_eq!(ijk.clone(), kij.clone());
+
+            // should be equal to one another
+            let ikj = find_prod(&find_prod(&i, &k), &j);
+            let jik = find_prod(&find_prod(&j, &i), &k);
+            let kji = find_prod(&find_prod(&k, &j), &i);
+            prop_assert_eq!(ikj.clone(), jik.clone());
+            prop_assert_eq!(ikj.clone(), kji.clone());
+
+            // Both sets should have the same index but opposite signs.
+            prop_assert_eq!(ijk.index(), ikj.index());
+            prop_assert_ne!(ijk.sign(), ikj.sign());
+        }
+    }
 }

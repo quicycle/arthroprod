@@ -1,6 +1,6 @@
 [package]
 name = "arthroprod"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["sminez <innes@cocoon.life>"]
 
 [[bin]]
@@ -13,4 +13,3 @@ lazy_static = "0.2"
 
 [dev-dependencies]
 proptest = "0.3.1"
-# quickcheck = "0.4.1"

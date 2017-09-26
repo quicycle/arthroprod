@@ -1,6 +1,6 @@
 //! Configuration data structures used in the rest of arthroprod.
 
-use super::types::{Component, KeyVec};
+use super::types::{Alpha, Component, KeyVec, Sign};
 use {ArError, Result};
 use std::collections::{HashMap, HashSet};
 
@@ -37,13 +37,15 @@ impl Allowed {
     ///
     /// # Examples
     /// ```
-    /// let indiced = vec!["p", "23", "31", "12", "0", "023", "031", "012",
+    /// use arthroprod::config::Allowed;
+    ///
+    /// let indices = vec!["p", "23", "31", "12", "0", "023", "031", "012",
     /// "123", "1", "2", "3", "0123", "01", "02", "03"];
     ///
     /// let my_allowed = match Allowed::from_vec(indices) {
     ///     Ok(a) => a,
     ///     Err(e) => panic!("Oops!"),
-    /// }
+    /// };
     /// ```
     pub fn from_vec(indices: Vec<&str>) -> Result<Allowed> {
         // Validate that this looks like a possible config value for ALLOWED in terms
@@ -118,5 +120,12 @@ impl Allowed {
     /// set of indices under the current Allowed instance.
     pub fn targets(&self) -> &HashMap<KeyVec, Component> {
         &self.targets
+    }
+
+    pub fn alphas(&self) -> Vec<Alpha> {
+        self.elems
+            .iter()
+            .map(|c| Alpha::from_index(*c, Sign::Pos))
+            .collect()
     }
 }
