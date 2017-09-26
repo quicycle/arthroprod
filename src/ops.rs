@@ -11,7 +11,7 @@
 //!
 //! In almost all cases you want to use the non-override functions which take
 //! their configuration from the constants defined in the `consts` module.
- 
+
 use super::config::Allowed;
 use super::consts::{ALLOWED, METRIC};
 use super::types::{Alpha, Component, Index, KeyVec, Sign};
@@ -102,16 +102,16 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     // Rule (1) :: Multiplication by αp is idempotent
     if i.is_point() {
         let index = j.index();
-        return Alpha::from_index(index, sign);
+        return Alpha::from_index(&index, &sign);
     };
     if j.is_point() {
         let index = i.index();
-        return Alpha::from_index(index, sign);
+        return Alpha::from_index(&index, &sign);
     };
 
     // Rule (2) :: Squaring and popping
-    let i_comps = i.to_vec();
-    let j_comps = j.to_vec();
+    let i_comps = i.as_vec();
+    let j_comps = j.as_vec();
     let mut intersection = vec![];
 
     // Find the repeated components in the combined indices
@@ -123,7 +123,7 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
 
     // Combine into a single vector
     let mut components = i_comps.clone();
-    components.append(&mut j.to_vec());
+    components.append(&mut j.as_vec());
 
     // Find out how far apart the repeated indices are, remove them and then adjust
     // the sign accordingly.
@@ -160,21 +160,21 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     // If we are left with a single index then there is nothing to pop.
     if components.len() == 0 {
         let index = Component::Point;
-        return Alpha::from_index(index, sign);
+        return Alpha::from_index(&index, &sign);
     } else if components.len() == 1 {
         let index = Component::Vector(components[0]);
-        return Alpha::from_index(index, sign);
+        return Alpha::from_index(&index, &sign);
     }
 
     // Rule (3) :: Popping to the correct order
     let index = targets.get(&KeyVec::new(components.clone()))
                        .expect(&format!("{:?} not in TARGETS.", components))
                        .clone();
-    let target_vec = index.to_vec();
+    let target_vec = index.as_vec();
 
     // If we are already in the correct order then we're done.
     if target_vec == components {
-        return Alpha::from_index(index, sign);
+        return Alpha::from_index(&index, &sign);
     }
 
     // Get the current ordering and then compute pops to correct
@@ -203,7 +203,7 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     }
 
     // Now that the sign is correct we can return
-    return Alpha::from_index(index, sign);
+    return Alpha::from_index(&index, &sign);
 }
 
 
@@ -230,9 +230,9 @@ mod tests {
             let ix = ALPHAS[*ix as usize];
             let s = STR_SIGNS[*s as usize];
             let i = Alpha::new(&format!("{}{}", s, ix));
-            let res = find_prod(&i, &i).index();
+            let res = find_prod(&i, &i);
 
-            prop_assert_eq!(res, Component::Point);
+            prop_assert_eq!(res.index(), &Component::Point);
         }
 
         #[test]

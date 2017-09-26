@@ -2,7 +2,6 @@
 version = "0.1.2"
 name = "arthroprod"
 authors = ["sminez <innes@cocoon.life>"]
-license = "MIT"
 license-file = "LICENSE"
 repository = "https://github.com/sminez/arthroprod"
 documentation = "https://docs.rs/arthroprod"

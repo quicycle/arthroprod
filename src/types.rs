@@ -35,7 +35,7 @@ impl Hash for KeyVec {
 // .: Types :. //
 /////////////////
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 /// A Sign can be positive or negative.
 ///
 /// Ongoing work is being carried out to determine if this is expressive enough
@@ -56,7 +56,7 @@ pub enum Sign {
     Neg,
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone, Ord, PartialOrd)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone)]
 /// A single vector index of space or time.
 ///
 /// The generators of the algebra are the standard (t, x, y, z) components of
@@ -69,7 +69,7 @@ pub enum Index {
     Three,
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Copy, Clone)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone)]
 /// An element of the algebra of order 0 through 4.
 ///
 /// Components (along with an associated Sign) make up an Alpha value.
@@ -90,7 +90,7 @@ pub enum Component {
     Quadrivector(Index, Index, Index, Index),
 }
 
-#[derive(Debug, Eq, PartialEq, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 /// The base element for computation with Absolute Relativity.
 ///
 /// An Alpha is a Component along with an associated Sign. All values and
@@ -99,6 +99,22 @@ pub enum Component {
 pub struct Alpha {
     index: Component,
     sign: Sign,
+}
+
+#[derive(Debug, PartialOrd, PartialEq, Clone)]
+/// A Xi is a value that must be bound to an Alpha.
+pub enum Xi {
+    /// A real number used in numeric calculations.
+    Real(f64),
+    /// A symbolic placeholder used in algebraic calculations.
+    Symbolic(String),
+}
+
+#[derive(Debug, PartialOrd, PartialEq, Clone)]
+/// A Pair is either a real or symbolic Xi value and an paired Alpha.
+pub struct Pair {
+    xi: Xi,
+    alpha: Alpha,
 }
 
 ////////////////////////////////////////
@@ -134,6 +150,21 @@ impl fmt::Display for Alpha {
             Sign::Pos => write!(f, "α{}", self.index),
             Sign::Neg => write!(f, "-α{}", self.index),
         }
+    }
+}
+
+impl fmt::Display for Xi {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Xi::Real(ref n) => write!(f, "ξ({})", n),
+            Xi::Symbolic(ref s) => write!(f, "ξ{}", s),
+        }
+    }
+}
+
+impl fmt::Display for Pair {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", self.alpha, self.xi)
     }
 }
 
@@ -214,7 +245,7 @@ impl Component {
 
     // TODO :: look at https://doc.rust-lang.org/std/convert/trait.Into.html
     /// Extract the indices of a component as a Vector.
-    pub fn to_vec(&self) -> Vec<Index> {
+    pub fn as_vec(&self) -> Vec<Index> {
         match *self {
             Component::Vector(i) => vec![i],
             Component::Bivector(i, j) => vec![i, j],
@@ -254,8 +285,11 @@ impl Alpha {
     }
 
     /// Construct an Alpha explicitly from a Component and a Sign.
-    pub fn from_index(index: Component, sign: Sign) -> Alpha {
-        Alpha { index, sign }
+    pub fn from_index(index: &Component, sign: &Sign) -> Alpha {
+        Alpha {
+            index: index.clone(),
+            sign: sign.clone(),
+        }
     }
 
     /// Check to see if an alpha is +/-αp
@@ -264,17 +298,44 @@ impl Alpha {
     }
 
     /// Return a copy of this Alpha's index
-    pub fn index(&self) -> Component {
-        self.index.clone()
+    pub fn index(&self) -> &Component {
+        &self.index
     }
 
     /// Return a copy of this Alpha's sign
-    pub fn sign(&self) -> Sign {
-        self.sign.clone()
+    pub fn sign(&self) -> &Sign {
+        &self.sign
     }
 
     /// Return a Vector of Indices representing this Alpha's Indices
-    pub fn to_vec(&self) -> Vec<Index> {
-        self.index.to_vec()
+    pub fn as_vec(&self) -> Vec<Index> {
+        self.index.as_vec()
+    }
+}
+
+
+impl Pair {
+    /// Create a new Pair from a Xi and an Alpha.
+    pub fn new(xi: Xi, alpha: Alpha) -> Pair {
+        Pair { xi, alpha }
+    }
+
+    /// Create a default Symbolic Pair from an string Alpha index.
+    pub fn sym(ix: &str) -> Pair {
+        let alpha = Alpha::new(ix);
+        // Remove any sign information before converting to a Xi
+        let ix = ix.trim_matches('-');
+        let xi = Xi::Symbolic(String::from(ix));
+        Pair { xi, alpha }
+    }
+
+    /// The xi elements of the Pair
+    pub fn xi(&self) -> &Xi {
+        &self.xi
+    }
+    ///
+    /// The alpha elements of the Pair
+    pub fn alpha(&self) -> &Alpha {
+        &self.alpha
     }
 }

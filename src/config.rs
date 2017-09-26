@@ -105,7 +105,7 @@ impl Allowed {
         let mut targets = HashMap::new();
         for e in elems.iter() {
             if *e != Component::Point {
-                targets.insert(KeyVec::new(e.to_vec()), e.clone());
+                targets.insert(KeyVec::new(e.as_vec()), e.clone());
             }
         }
         Ok(Allowed { elems, targets })
@@ -125,7 +125,7 @@ impl Allowed {
     pub fn alphas(&self) -> Vec<Alpha> {
         self.elems
             .iter()
-            .map(|c| Alpha::from_index(*c, Sign::Pos))
+            .map(|c| Alpha::from_index(c, &Sign::Pos))
             .collect()
     }
 }
