@@ -329,12 +329,12 @@ impl Pair {
         Pair { xi, alpha }
     }
 
-    /// The xi elements of the Pair
+    /// The xi element of the Pair
     pub fn xi(&self) -> &Xi {
         &self.xi
     }
-    ///
-    /// The alpha elements of the Pair
+
+    /// The alpha element of the Pair
     pub fn alpha(&self) -> &Alpha {
         &self.alpha
     }

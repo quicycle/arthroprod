@@ -20,8 +20,8 @@ and this may become a Python extension module in the future.
 
 TODO
 ----
-- [ ] Generic Xi types
-- [ ] Pairs and MultiVectors
+- [ ] Prodable as a trait?
+- [ ] MultiVectors
 - [ ] Differentials
 - [ ] CLI interface for computing products 
 - [ ] Parsing of calculation files
