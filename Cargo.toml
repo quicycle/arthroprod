@@ -1,7 +1,7 @@
 [package]
 version = "0.1.3"
 name = "arthroprod"
-authors = ["sminez <innes@cocoon.life>"]
+authors = ["Innes Anderson-Morrison <innesdmorrison@gmail.com>"]
 license-file = "LICENSE"
 repository = "https://github.com/sminez/arthroprod"
 documentation = "https://docs.rs/arthroprod"
@@ -17,6 +17,7 @@ path = "src/bin/main.rs"
 
 [dependencies]
 lazy_static = "0.2"
+clap = "2.26"
 
 [dev-dependencies]
 proptest = "0.3.1"
