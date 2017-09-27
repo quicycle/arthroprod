@@ -65,11 +65,11 @@ use std::collections::HashMap;
 /// use arthroprod::types::Alpha;
 /// use arthroprod::ops::find_prod;
 ///
-/// let a1 = Alpha::new("31");
-/// let a2 = Alpha::new("01");
+/// let a1 = Alpha::new("31").unwrap();
+/// let a2 = Alpha::new("01").unwrap();
 ///
-/// assert_eq!(find_prod(&a1, &a2), Alpha::new("-03"));
-/// assert_eq!(find_prod(&a1, &a1), Alpha::new("-p"));
+/// assert_eq!(find_prod(&a1, &a2), Alpha::new("-03").unwrap());
+/// assert_eq!(find_prod(&a1, &a1), Alpha::new("-p").unwrap());
 /// ```
 pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
     find_prod_override(i, j, &METRIC, &ALLOWED)
@@ -87,13 +87,13 @@ pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
 /// use arthroprod::ops::find_prod_override;
 /// use arthroprod::consts::{ALLOWED, METRIC};
 ///
-/// let a1 = Alpha::new("31");
-/// let a2 = Alpha::new("01");
+/// let a1 = Alpha::new("31").unwrap();
+/// let a2 = Alpha::new("01").unwrap();
 ///
 /// assert_eq!(find_prod_override(&a1, &a2, &METRIC, &ALLOWED),
-/// Alpha::new("-03"));
+/// Alpha::new("-03").unwrap());
 /// assert_eq!(find_prod_override(&a1, &a1, &METRIC, &ALLOWED),
-/// Alpha::new("-p"));
+/// Alpha::new("-p").unwrap());
 /// ```
 pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, allowed: &Allowed) -> Alpha {
     let targets = allowed.targets();
@@ -214,8 +214,8 @@ mod tests {
     // use proptest::prelude::*;
 
     lazy_static! {
-        static ref POINT: Alpha = Alpha::new("p");
-        static ref NEG_POINT: Alpha = Alpha::new("-p");
+        static ref POINT: Alpha = Alpha::new("p").unwrap();
+        static ref NEG_POINT: Alpha = Alpha::new("-p").unwrap();
     }
 
     const INDICES: [&str; 4] = ["0", "1", "2", "3"];
@@ -229,7 +229,7 @@ mod tests {
         fn squaring_is_always_ap(ref ix in 0..16, ref s in 0..2) {
             let ix = ALPHAS[*ix as usize];
             let s = STR_SIGNS[*s as usize];
-            let i = Alpha::new(&format!("{}{}", s, ix));
+            let i = Alpha::new(&format!("{}{}", s, ix)).unwrap();
             let res = find_prod(&i, &i);
 
             prop_assert_eq!(res.index(), &Component::Point);
@@ -240,7 +240,7 @@ mod tests {
         fn ap_is_idempotent(ref ix in 0..16, ref s in 0..2) {
             let ix = ALPHAS[*ix as usize];
             let s = STR_SIGNS[*s as usize];
-            let i = Alpha::new(&format!("{}{}", s, ix));
+            let i = Alpha::new(&format!("{}{}", s, ix)).unwrap();
             let res = find_prod(&i, &POINT);
 
             prop_assert_eq!(res, i);
@@ -251,7 +251,7 @@ mod tests {
         fn neg_ap_negates(ref ix in 0..16, ref s in 0..2) {
             let ix = ALPHAS[*ix as usize];
             let s = STR_SIGNS[*s as usize];
-            let i = Alpha::new(&format!("{}{}", s, ix));
+            let i = Alpha::new(&format!("{}{}", s, ix)).unwrap();
             let res = find_prod(&i, &NEG_POINT);
 
             prop_assert_eq!(res.index(), i.index());
@@ -266,11 +266,11 @@ mod tests {
 
             let i = INDICES[*i as usize];
             let si = STR_SIGNS[*si as usize];
-            let i = Alpha::new(&format!("{}{}", si, i));
+            let i = Alpha::new(&format!("{}{}", si, i)).unwrap();
 
             let j = INDICES[*j as usize];
             let sj = STR_SIGNS[*sj as usize];
-            let j = Alpha::new(&format!("{}{}", sj, j));
+            let j = Alpha::new(&format!("{}{}", sj, j)).unwrap();
 
             let first = find_prod(&i, &j);
             let second = find_prod(&j, &i);
@@ -288,15 +288,15 @@ mod tests {
 
             let i = INDICES[*i as usize];
             let si = STR_SIGNS[*si as usize];
-            let i = Alpha::new(&format!("{}{}", si, i));
+            let i = Alpha::new(&format!("{}{}", si, i)).unwrap();
 
             let j = INDICES[*j as usize];
             let sj = STR_SIGNS[*sj as usize];
-            let j = Alpha::new(&format!("{}{}", sj, j));
+            let j = Alpha::new(&format!("{}{}", sj, j)).unwrap();
 
             let k = INDICES[*k as usize];
             let sk = STR_SIGNS[*sk as usize];
-            let k = Alpha::new(&format!("{}{}", sk, k));
+            let k = Alpha::new(&format!("{}{}", sk, k)).unwrap();
 
             // Should be equal to one another
             let ijk = find_prod(&find_prod(&i, &j), &k);

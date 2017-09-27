@@ -262,7 +262,7 @@ impl Alpha {
     ///
     /// NOTE: This will panic if the index is invalid in order to prevent the
     /// user from running inconsistant calculations.
-    pub fn new(ix: &str) -> Alpha {
+    pub fn new(ix: &str) -> Result<Alpha> {
         let sign = match ix.starts_with("-") {
             true => Sign::Neg,
             false => Sign::Pos,
@@ -270,11 +270,8 @@ impl Alpha {
 
         let ix = ix.trim_matches('-');
 
-        let index = match Component::new(ix, &ALLOWED.indices()) {
-            Ok(i) => i,
-            Err(_) => panic!("Managed to create invalid alpha from defaults."),
-        };
-        Alpha { index, sign }
+        let index = Component::new(ix, &ALLOWED.indices())?;
+        Ok(Alpha { index, sign })
     }
 
     /// new_override allows the caller to explicitly specify an index, sign and
@@ -321,12 +318,12 @@ impl Pair {
     }
 
     /// Create a default Symbolic Pair from an string Alpha index.
-    pub fn sym(ix: &str) -> Pair {
-        let alpha = Alpha::new(ix);
+    pub fn sym(ix: &str) -> Result<Pair> {
+        let alpha = Alpha::new(ix)?;
         // Remove any sign information before converting to a Xi
         let ix = ix.trim_matches('-');
         let xi = Xi::Symbolic(String::from(ix));
-        Pair { xi, alpha }
+        Ok(Pair { xi, alpha })
     }
 
     /// The xi element of the Pair
