@@ -23,6 +23,4 @@ TODO
 - [ ] Prodable as a trait?
 - [ ] MultiVectors
 - [ ] Differentials
-- [ ] CLI interface for computing products 
 - [ ] Parsing of calculation files
-- [ ] Look at clap: https://github.com/kbknapp/clap-rs
