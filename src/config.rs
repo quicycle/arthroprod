@@ -1,8 +1,38 @@
 //! Configuration data structures used in the rest of arthroprod.
 
+use super::consts::{ALPHAS, DEFAULT_METRIC_SIGNATURE};
 use super::types::{Alpha, Component, Index, KeyVec, Sign};
 use {ArError, Result};
 use std::collections::{HashMap, HashSet};
+
+
+/// A configuration to run calculations under.
+pub struct Config {
+    pub allowed: Allowed,
+    pub metric: HashMap<Index, Sign>,
+}
+
+
+impl Config {
+    /// Create a new default config.
+    pub fn new_default() -> Config {
+        let allowed = Allowed::from_vec(ALPHAS.to_vec()).expect("!!!");
+        let metric = metric_from_string(DEFAULT_METRIC_SIGNATURE).expect("!!!");
+        Config { allowed, metric }
+    }
+
+    /// Create a new config override.
+    ///
+    /// NOT CURRENTLY IMPLEMENTED!!! (This will just return the default config)
+    pub fn new(fname: String) -> Result<Config> {
+        eprintln!(
+            "Not loading config from {}: custom config is not implemented yet!",
+            fname
+        );
+        Ok(Config::new_default())
+    }
+}
+
 
 /// The base elements of the algebra.
 ///
@@ -26,6 +56,7 @@ pub struct Allowed {
     elems: HashSet<Component>,
     targets: HashMap<KeyVec, Component>,
 }
+
 
 impl Allowed {
     /// Parse a vector of string indices into a new ALLOWED instance.
