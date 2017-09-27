@@ -12,12 +12,12 @@ Clifford Algebra based computation for the theory of Absolute Relativity.
 
 [[bin]]
 doc = false
-name = "ar"
+name = "aprod"
 path = "src/bin/main.rs"
 
 [dependencies]
 lazy_static = "0.2"
-clap = "2.26"
+getopts = "0.2"
 
 [dev-dependencies]
 proptest = "0.3.1"

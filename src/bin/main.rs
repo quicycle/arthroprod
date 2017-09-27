@@ -1,34 +1,88 @@
-extern crate clap;
 extern crate arthroprod;
-use clap::App;
+extern crate getopts;
 
+use arthroprod::config;
 use arthroprod::ops;
 use arthroprod::types::Alpha;
+use getopts::Options;
+use std::env;
+use std::io::{self, Write};
+use std::process;
 
+
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} [options]", program);
+    print!("{}", opts.usage(&brief));
+}
+
+fn run(cfg: config::Config) -> Result<(), &'static str> {
+    loop {
+        print!("\n>>> ");
+        io::stdout().flush().unwrap();
+
+        // Read the user input
+        let mut input = String::new();
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
+
+        let alphas: Vec<&str> = input.split_whitespace().collect();
+        if alphas.len() != 2 {
+            println!("\nMust provide two alpha indices");
+            continue;
+        }
+
+        let a1 = match Alpha::new(alphas[0]) {
+            Ok(a) => a,
+            Err(e) => {
+                println!("\n{}", e);
+                continue;
+            }
+        };
+        let a2 = match Alpha::new(alphas[1]) {
+            Ok(a) => a,
+            Err(e) => {
+                println!("\n{}", e);
+                continue;
+            }
+        };
+        let res = ops::find_prod_override(&a1, &a2, &cfg.metric, &cfg.allowed);
+        println!("{} ^ {} = {}", a1, a2, res);
+    }
+}
 
 fn main() {
-    // See https://docs.rs/clap/2.26.2/clap/ for details
-    let matches = App::new("ar")
-        .version("0.1.3")
-        .author("Innes Anderson-Morrison. <innesdmorrison@gmail.com>")
-        .about(
-            "Clifford Algebra based computation for the theory of Absolute Relativity.
-At present this is a simple calculator for multiplying two alpha values.",
-        )
-        .args_from_usage(
-            "-c, --config=[FILE] 'Sets a custom config file'
-            <ALPHA1>             'First alpha'
-            <ALPHA2>             'Second alpha'",
-        )
-        .get_matches();
+    let args: Vec<String> = env::args().collect();
+    let program = args[0].clone();
 
-    // We're safe to use unwrap here because these are required arguments.
-    // Otherwise we need to use `if let` or `unwrap_or`
-    let a1 = matches.value_of("ALPHA1").unwrap();
-    let a2 = matches.value_of("ALPHA2").unwrap();
+    let mut opts = Options::new();
+    opts.optopt("c", "config", "provide a custom config to use.", "CONFIG");
+    opts.optflag("h", "help", "print this help menu");
 
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(f) => panic!(f.to_string()),
+    };
 
-    let a1 = Alpha::new(a1);
-    let a2 = Alpha::new(a2);
-    println!("{} ^ {} = {}", a1, a2, ops::find_prod(&a1, &a2));
+    // Handle help text
+    if matches.opt_present("h") {
+        print_usage(&program, opts);
+        return;
+    }
+
+    // Handle config override
+    let cfg = match matches.opt_str("c") {
+        Some(c) => {
+            config::Config::new(c).unwrap_or_else(|err| {
+                eprintln!("Problem parsing args: {}", err);
+                process::exit(1);
+            })
+        }
+        None => config::Config::new_default(),
+    };
+
+    if let Err(e) = run(cfg) {
+        eprintln!("Error: {}", e);
+        process::exit(1);
+    }
 }
