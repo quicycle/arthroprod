@@ -1,6 +1,6 @@
 //! Configuration data structures used in the rest of arthroprod.
 
-use super::types::{Alpha, Component, KeyVec, Sign};
+use super::types::{Alpha, Component, Index, KeyVec, Sign};
 use {ArError, Result};
 use std::collections::{HashMap, HashSet};
 
@@ -128,4 +128,40 @@ impl Allowed {
             .map(|c| Alpha::from_index(c, &Sign::Pos))
             .collect()
     }
+}
+
+/// Construct a new metric from a sign string.
+///
+/// Sign strings are four characters long and are made of +/- only.
+///
+/// # Examples
+/// ```
+/// use arthroprod::config::metric_from_string;
+///
+/// let my_metric = match metric_from_string("-+++") {
+///     Ok(m) => m,
+///     Err(e) => panic!("{}", e),
+/// };
+/// ```
+pub fn metric_from_string(s: &str) -> Result<HashMap<Index, Sign>> {
+    if s.len() != 4 {
+        return Err(ArError::InvalidConfig(
+            String::from("Metric must contain 4 values"),
+        ));
+    }
+    let mut m = HashMap::new();
+
+    for (ix, sgn) in s.chars().enumerate() {
+        let index = Index::try_from_str(ix.to_string().as_str())?;
+        match sgn {
+            '+' => m.insert(index, Sign::Pos),
+            '-' => m.insert(index, Sign::Neg),
+            _ => {
+                return Err(ArError::InvalidConfig(
+                    String::from("Metric string must only be +/-"),
+                ))
+            }
+        };
+    }
+    Ok(m)
 }
