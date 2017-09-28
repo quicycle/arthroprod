@@ -167,9 +167,10 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     }
 
     // Rule (3) :: Popping to the correct order
-    let index = targets.get(&KeyVec::new(components.clone()))
-                       .expect(&format!("{:?} not in TARGETS.", components))
-                       .clone();
+    let index = targets
+        .get(&KeyVec::new(components.clone()))
+        .expect(&format!("{:?} not in TARGETS.", components))
+        .clone();
     let target_vec = index.as_vec();
 
     // If we are already in the correct order then we're done.
@@ -182,9 +183,10 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     for (i, c) in target_vec.iter().enumerate() {
         target_ordering.insert(c, i as u8 + 1);
     }
-    let mut current: Vec<u8> = components.iter()
-                                         .map(|e| *target_ordering.get(e).expect("fail"))
-                                         .collect();
+    let mut current: Vec<u8> = components
+        .iter()
+        .map(|e| *target_ordering.get(e).expect("fail"))
+        .collect();
 
     while current.len() > 1 {
         if current[0] % 2 == 0 {
@@ -197,9 +199,10 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
         for (i, c) in sorted.iter().enumerate() {
             new_ordering.insert(c.clone(), i as u8 + 1);
         }
-        current = current.iter()
-                         .map(|e| *new_ordering.get(e).expect("fail"))
-                         .collect();
+        current = current
+            .iter()
+            .map(|e| *new_ordering.get(e).expect("fail"))
+            .collect();
     }
 
     // Now that the sign is correct we can return

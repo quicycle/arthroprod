@@ -34,6 +34,7 @@ impl Config {
 }
 
 
+#[derive(Debug, Eq, PartialEq, Clone)]
 /// The base elements of the algebra.
 ///
 /// A valid Allowed instance contains 16 Alpha elements that form the algebra
@@ -59,6 +60,13 @@ pub struct Allowed {
 
 
 impl Allowed {
+    /// Create a new copy of the default Allowed instance.
+    pub fn default() -> Allowed {
+        Allowed::from_vec(ALPHAS.to_vec()).expect(
+            "The default ALPHAS are not valid!",
+        )
+    }
+
     /// Parse a vector of string indices into a new ALLOWED instance.
     ///
     /// The vector of strings provided will be checked for some (but not all)
@@ -73,9 +81,9 @@ impl Allowed {
     /// let indices = vec!["p", "23", "31", "12", "0", "023", "031", "012",
     /// "123", "1", "2", "3", "0123", "01", "02", "03"];
     ///
-    /// let my_allowed = match Allowed::from_vec(indices) {
+    /// match Allowed::from_vec(indices) {
     ///     Ok(a) => a,
-    ///     Err(e) => panic!("Oops!"),
+    ///     Err(_) => panic!("Oops!"),
     /// };
     /// ```
     pub fn from_vec(indices: Vec<&str>) -> Result<Allowed> {
@@ -169,7 +177,7 @@ impl Allowed {
 /// ```
 /// use arthroprod::config::metric_from_string;
 ///
-/// let my_metric = match metric_from_string("-+++") {
+/// match metric_from_string("-+++") {
 ///     Ok(m) => m,
 ///     Err(e) => panic!("{}", e),
 /// };

@@ -57,9 +57,7 @@ impl Component {
             return Ok(Component::Point);
         }
 
-        let v: Vec<&str> = ix.split("")
-                             .filter(|&c| c != "")
-                             .collect();
+        let v: Vec<&str> = ix.split("").filter(|&c| c != "").collect();
 
         match v.len() {
             1 => {

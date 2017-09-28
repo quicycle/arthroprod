@@ -15,16 +15,18 @@ reorder_imports_in_group = true
 wrap_comments = true
 
 # Visually align chained method calls on `.`
-chain_indent = "Visual"
-chain_one_line_max = 40
+# chain_indent = "Visual"
+chain_indent = "Block"
+chain_one_line_max = 60
+chain_split_single_child = true
 
 # Try to place function args on complete lines rather than
 # as a vertical block
 fn_args_density = "Compressed"
 
 # Allow for compact formatting of struct literals
-stuct_lit_width = 50
-struct_variant_width = 50
+stuct_lit_width = 60
+struct_variant_width = 60
 struct_field_align_threshold = 20
 struct_lit_multiline_style = "PreferSingle"
 
