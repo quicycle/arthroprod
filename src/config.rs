@@ -25,10 +25,7 @@ impl Config {
     ///
     /// NOT CURRENTLY IMPLEMENTED!!! (This will just return the default config)
     pub fn new(fname: String) -> Result<Config> {
-        eprintln!(
-            "Not loading config from {}: custom config is not implemented yet!",
-            fname
-        );
+        eprintln!("Not loading config from {}: custom config is not implemented yet!", fname);
         Ok(Config::new_default())
     }
 }
@@ -107,11 +104,7 @@ impl Allowed {
                 2 => bivectors = bivectors + 1,
                 3 => trivectors = trivectors + 1,
                 4 => quadrivector = quadrivector + 1,
-                _ => {
-                    return Err(ArError::InvalidConfig(
-                        String::from("Invalid index in ALLOWED"),
-                    ))
-                }
+                _ => return Err(ArError::InvalidConfig(String::from("Invalid index in ALLOWED"))),
             }
         }
 
@@ -126,12 +119,9 @@ impl Allowed {
         for case in expected.iter() {
             let (name, have, want) = *case;
             if have != want {
-                return Err(ArError::InvalidConfig(String::from(format!(
-                    "ALLOWED contained wrong number of {}: {} != {}",
-                    name,
-                    have,
-                    want
-                ))));
+                return Err(ArError::InvalidConfig(String::from(
+                    format!("ALLOWED contained wrong number of {}: {} != {}", name, have, want),
+                )));
             }
         }
 
@@ -164,7 +154,7 @@ impl Allowed {
     pub fn alphas(&self) -> Vec<Alpha> {
         self.elems
             .iter()
-            .map(|c| Alpha::from_index(c, &Sign::Pos))
+            .map(|c| Alpha::from_comp(c, &Sign::Pos))
             .collect()
     }
 }
@@ -184,9 +174,7 @@ impl Allowed {
 /// ```
 pub fn metric_from_string(s: &str) -> Result<HashMap<Index, Sign>> {
     if s.len() != 4 {
-        return Err(ArError::InvalidConfig(
-            String::from("Metric must contain 4 values"),
-        ));
+        return Err(ArError::InvalidConfig(String::from("Metric must contain 4 values")));
     }
     let mut m = HashMap::new();
 
@@ -195,11 +183,7 @@ pub fn metric_from_string(s: &str) -> Result<HashMap<Index, Sign>> {
         match sgn {
             '+' => m.insert(index, Sign::Pos),
             '-' => m.insert(index, Sign::Neg),
-            _ => {
-                return Err(ArError::InvalidConfig(
-                    String::from("Metric string must only be +/-"),
-                ))
-            }
+            _ => return Err(ArError::InvalidConfig(String::from("Metric string must only be +/-"))),
         };
     }
     Ok(m)

@@ -2,15 +2,16 @@ use std::collections::HashSet;
 use std::fmt;
 
 use super::index::*;
+use super::super::consts::ALLOWED;
 use {ArError, Result};
 
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone)]
-/// An element of the algebra of order 0 through 4.
+/// An element of the algebra of grade 0 through 4.
 ///
 /// Components (along with an associated Sign) make up an Alpha value.
 /// Functionally, components are tuples of Indices and for ease of writing
-/// we denote higher order components in a contracted form:
+/// we denote higher grade components in a contracted form:
 ///
 /// ```ignore
 /// α1,α2 == α12
@@ -43,7 +44,15 @@ impl fmt::Display for Component {
 impl Component {
     /// Construct a new Component and verify that it is an allowed element of
     /// the algebra.
-    pub fn new(ix: &str, allowed: &HashSet<Component>) -> Result<Component> {
+    pub fn new(ix: &str) -> Result<Component> {
+        let index = Component::unsafe_new(ix)?;
+        if !ALLOWED.indices().contains(&index) {
+            return Err(ArError::ComponentNotAllowed(String::from(ix)));
+        }
+        Ok(index)
+    }
+
+    pub fn new_override(ix: &str, allowed: &HashSet<Component>) -> Result<Component> {
         let index = Component::unsafe_new(ix)?;
         if !allowed.contains(&index) {
             return Err(ArError::ComponentNotAllowed(String::from(ix)));

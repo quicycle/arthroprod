@@ -3,6 +3,7 @@ extern crate getopts;
 
 use arthroprod::config;
 use arthroprod::ops;
+
 use arthroprod::types::Alpha;
 use getopts::Options;
 use std::env;
@@ -15,6 +16,7 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
+// TODO:: decide on whether runtime config should be allowed
 fn run(cfg: config::Config) -> Result<(), &'static str> {
     loop {
         print!("\n>>> ");
@@ -22,9 +24,7 @@ fn run(cfg: config::Config) -> Result<(), &'static str> {
 
         // Read the user input
         let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read input");
+        io::stdin().read_line(&mut input).expect("Failed to read input");
 
         let alphas: Vec<&str> = input.split_whitespace().collect();
         if alphas.len() != 2 {

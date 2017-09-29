@@ -20,7 +20,7 @@ and this may become a Python extension module in the future.
 
 TODO
 ----
-- [ ] Prodable as a trait?
-- [ ] MultiVectors
+- [ ] Prodable as a trait? (Convert argument to a multivector and then ^)
+- [x] MultiVectors
 - [ ] Differentials
 - [ ] Parsing of calculation files

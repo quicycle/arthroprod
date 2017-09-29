@@ -27,6 +27,12 @@ impl Pair {
         Pair { xi, alpha }
     }
 
+    /// Construct a symbolic Pair from an Alpha
+    pub fn from_alpha(alpha: Alpha) -> Pair {
+        let xi = Xi::Symbolic(format!("{}", alpha.comp()));
+        Pair { xi, alpha }
+    }
+
     /// Create a default Symbolic Pair from an string Alpha index.
     pub fn sym(ix: &str) -> Result<Pair> {
         let alpha = Alpha::new(ix)?;

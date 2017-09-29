@@ -11,68 +11,99 @@
 //!
 //! In almost all cases you want to use the non-override functions which take
 //! their configuration from the constants defined in the `consts` module.
+//!
+//! Finding the product of αs
+//! =========================
+//! This is based on a set of simplification rules based on allowed
+//! manipulations of elements in the algebra.
+//! (NOTE: In all notation, αμ.αν is simplified to αμν)
+//!
+//! (1)   αpμ == αμp == αμ
+//!     'Multiplication by αp (r-point) is idempotent. (αp is the identity)'
+//!
+//! (2i)  α0^2 == αp
+//!     'Repeated α0 indices can just be removed.'
+//!
+//! (2ii) αi^2 == -αp
+//!     'Repeated αi indices can be removed by negating'
+//!
+//! (2iii) α^2 == +-αp
+//!     'All elements square to either +αp or -αp'
+//!
+//! (3)   αμν == -ανμ
+//!     'Adjacent indices can be popped by negating.'
+//!
+//! Counting pops
+//! =============
+//! I am converting the current product into an array of integers in order to
+//! allow for the different orderings of each final product in a flexible way.
+//! Ordering is a mapping of index (0,1,2,3) to position in the final product.
+//! This should be stable regardless of how we define the 16 elements of the
+//! algebra.
+//!
+//! The algorithm makes use of the fact that for any ordering we can dermine the
+//! whether the total number of pops is odd or even by looking at the first
+//! element alone and then recursing on the rest of the ordering as a
+//! sub-problem. If the final position of the first element is even then it
+//! will take an odd number of pops to correctly position it. We can then look
+//! only at the remaining elements and re-label them with indices 1->(n-1) and
+//! repeat the process until we are done.
+//!
 
 use super::config::Allowed;
-use super::consts::{ALLOWED, METRIC};
-use super::types::{Alpha, Component, Index, KeyVec, Sign};
+use super::types::{Alpha, Component, Index, KeyVec, Mvec, Sign};
 use std::collections::HashMap;
 
-/// Compute the product of two alphas.
+
+/// Allow elements to be combined under the algebra.
+pub trait ArOps<RHS = Self> {
+    /// Full product
+    fn ar_prod(&self, _rhs: &RHS) -> Mvec;
+
+    /// Division: LHS into RHS
+    fn ar_div_into(&self, _rhs: &RHS) -> Mvec;
+
+    /// Division: LHS by RHS
+    fn ar_div_by(&self, _rhs: &RHS) -> Mvec;
+
+    /// Addition
+    fn ar_add(&self, _rhs: &RHS) -> Mvec;
+}
+
+/// Compute the Clifford Algebra Full Product between two components.
 ///
-/// Use find_prod_override for providing a custom metric and target alpha set.
-/// Algorithm taken from arpy (Absolute Relativity in Python) Copyright (C)
-/// 2016-2017 Innes D. Anderson-Morrison All rights reserved.
+/// (See https://en.wikipedia.org/wiki/Clifford_algebra)
 ///
-/// Multiplying αs
-/// ==============
-/// This is based on a set of simplification rules based on allowed
-/// manipulations of elements in the algebra.
-/// (NOTE: In all notation, αμ.αν is simplified to αμν)
+/// NOTE: Inside of arthroprod, the full product always returns an Mvec as,
+/// strictly speaking, this operation is only valid on Multivectors. In order
+/// to simplify computation, and to avoid forcing users to convert everything
+/// to a Multivector before calculating, `full_product` accepts anything that
+/// implements the ArOps interface:
 ///
-/// (1)   αpμ == αμp == αμ
-///     'Multiplication by αp (r-point) is idempotent. (αp is the identity)'
+///   * Mvec
 ///
-/// (2i)  α0^2 == αp
-///     'Repeated α0 indices can just be removed.'
+///   * Pair
 ///
-/// (2ii) αi^2 == -αp
-///     'Repeated αi indices can be removed by negating'
-///
-/// (2iii) α^2 == +-αp
-///     'All elements square to either +αp or -αp'
-///
-/// (3)   αμν == -ανμ
-///     'Adjacent indices can be popped by negating.'
-///
-/// Counting pops
-/// =============
-/// I am converting the current product into an array of integers in order to
-/// allow for the different orderings of each final product in a flexible way.
-/// Ordering is a mapping of index (0,1,2,3) to position in the final product.
-/// This should be stable regardless of how we define the 16 elements of the
-/// algebra.
-///
-/// The algorithm makes use of the fact that for any ordering we can dermine the
-/// whether the total number of pops is odd or even by looking at the first
-/// element alone and then recursing on the rest of the ordering as a
-/// sub-problem. If the final position of the first element is even then it
-/// will take an odd number of pops to correctly position it. We can then look
-/// only at the remaining elements and re-label them with indices 1->(n-1) and
-/// repeat the process until we are done.
+///   * Alpha
 ///
 /// # Examples
 /// ```
-/// use arthroprod::types::Alpha;
-/// use arthroprod::ops::find_prod;
+/// use arthroprod::types::{Alpha, Mvec};
+/// use arthroprod::ops::full_product;
 ///
 /// let a1 = Alpha::new("31").unwrap();
 /// let a2 = Alpha::new("01").unwrap();
 ///
-/// assert_eq!(find_prod(&a1, &a2), Alpha::new("-03").unwrap());
-/// assert_eq!(find_prod(&a1, &a1), Alpha::new("-p").unwrap());
+/// let mut expected = Mvec::new();
+/// expected.add_string("-03").unwrap();
+///
+/// assert_eq!(full_product(&a1, &a2), expected);
 /// ```
-pub fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
-    find_prod_override(i, j, &METRIC, &ALLOWED)
+pub fn full_product<T, S>(i: &T, j: &S) -> Mvec
+where
+    T: ArOps<S>, // T must impl ArOps with RHS == S
+{
+    i.ar_prod(j)
 }
 
 /// Allow the caller to specify a different metric and set of target alphas
@@ -101,12 +132,12 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
 
     // Rule (1) :: Multiplication by αp is idempotent
     if i.is_point() {
-        let index = j.index();
-        return Alpha::from_index(&index, &sign);
+        let comp = j.comp();
+        return Alpha::from_comp(&comp, &sign);
     };
     if j.is_point() {
-        let index = i.index();
-        return Alpha::from_index(&index, &sign);
+        let comp = i.comp();
+        return Alpha::from_comp(&comp, &sign);
     };
 
     // Rule (2) :: Squaring and popping
@@ -159,23 +190,23 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     // If everything cancelled then i == j and we are left with αp.
     // If we are left with a single index then there is nothing to pop.
     if components.len() == 0 {
-        let index = Component::Point;
-        return Alpha::from_index(&index, &sign);
+        let comp = Component::Point;
+        return Alpha::from_comp(&comp, &sign);
     } else if components.len() == 1 {
-        let index = Component::Vector(components[0]);
-        return Alpha::from_index(&index, &sign);
+        let comp = Component::Vector(components[0]);
+        return Alpha::from_comp(&comp, &sign);
     }
 
     // Rule (3) :: Popping to the correct order
-    let index = targets
+    let comp = targets
         .get(&KeyVec::new(components.clone()))
         .expect(&format!("{:?} not in TARGETS.", components))
         .clone();
-    let target_vec = index.as_vec();
+    let target_vec = comp.as_vec();
 
     // If we are already in the correct order then we're done.
     if target_vec == components {
-        return Alpha::from_index(&index, &sign);
+        return Alpha::from_comp(&comp, &sign);
     }
 
     // Get the current ordering and then compute pops to correct
@@ -206,15 +237,15 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     }
 
     // Now that the sign is correct we can return
-    return Alpha::from_index(&index, &sign);
+    return Alpha::from_comp(&comp, &sign);
 }
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use super::super::consts::{ALLOWED, METRIC};
     use super::super::consts::ALPHAS;
-    // use proptest::prelude::*;
 
     lazy_static! {
         static ref POINT: Alpha = Alpha::new("p").unwrap();
@@ -224,7 +255,11 @@ mod tests {
     const INDICES: [&str; 4] = ["0", "1", "2", "3"];
     const STR_SIGNS: [&str; 2] = ["", "-"];
 
-    // const ALPHA_REGEX: &str = "-?[0123]{1,4}|-?p";
+
+    /// Helper to avoid having to pass METRIC and ALLOWED each time
+    fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {
+        find_prod_override(i, j, &METRIC, &ALLOWED)
+    }
 
     proptest! {
         #[test]
@@ -235,7 +270,7 @@ mod tests {
             let i = Alpha::new(&format!("{}{}", s, ix)).unwrap();
             let res = find_prod(&i, &i);
 
-            prop_assert_eq!(res.index(), &Component::Point);
+            prop_assert_eq!(res.comp(), &Component::Point);
         }
 
         #[test]
@@ -257,7 +292,7 @@ mod tests {
             let i = Alpha::new(&format!("{}{}", s, ix)).unwrap();
             let res = find_prod(&i, &NEG_POINT);
 
-            prop_assert_eq!(res.index(), i.index());
+            prop_assert_eq!(res.comp(), i.comp());
             prop_assert_ne!(res.sign(), i.sign());
         }
 
@@ -278,7 +313,7 @@ mod tests {
             let first = find_prod(&i, &j);
             let second = find_prod(&j, &i);
 
-            prop_assert_eq!(first.index(), second.index());
+            prop_assert_eq!(first.comp(), second.comp());
             prop_assert_ne!(first.sign(), second.sign());
         }
 
@@ -316,7 +351,7 @@ mod tests {
             prop_assert_eq!(ikj.clone(), kji.clone());
 
             // Both sets should have the same index but opposite signs.
-            prop_assert_eq!(ijk.index(), ikj.index());
+            prop_assert_eq!(ijk.comp(), ikj.comp());
             prop_assert_ne!(ijk.sign(), ikj.sign());
         }
     }
