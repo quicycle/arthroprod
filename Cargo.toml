@@ -1,5 +1,5 @@
 [package]
-version = "0.1.3"
+version = "0.1.4"
 name = "arthroprod"
 authors = ["Innes Anderson-Morrison <innesdmorrison@gmail.com>"]
 license-file = "LICENSE"
