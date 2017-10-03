@@ -1,14 +1,16 @@
 extern crate arthroprod;
 extern crate getopts;
 
-use arthroprod::config;
-use arthroprod::ops;
-
-use arthroprod::types::Alpha;
-use getopts::Options;
 use std::env;
 use std::io::{self, Write};
 use std::process;
+
+use getopts::Options;
+
+use arthroprod::algebra;
+use arthroprod::calcfile;
+use arthroprod::types::*;
+
 
 
 fn print_usage(program: &str, opts: Options) {
@@ -16,37 +18,38 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-// TODO:: decide on whether runtime config should be allowed
-fn run(cfg: config::Config) -> Result<(), &'static str> {
+fn repl() -> Result<(), &'static str> {
     loop {
         print!("\n>>> ");
         io::stdout().flush().unwrap();
 
         // Read the user input
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Failed to read input");
+        io::stdin().read_line(&mut input).expect(
+            "Failed to read input",
+        );
 
         let alphas: Vec<&str> = input.split_whitespace().collect();
         if alphas.len() != 2 {
-            println!("\nMust provide two alpha indices");
+            println!("\nMust provide two alpha indices: e.g. 'a12 a023'");
             continue;
         }
 
-        let a1 = match Alpha::new(alphas[0]) {
+        let a1 = match Alpha::new(&alphas[0][1..]) {
             Ok(a) => a,
             Err(e) => {
                 println!("\n{}", e);
                 continue;
             }
         };
-        let a2 = match Alpha::new(alphas[1]) {
+        let a2 = match Alpha::new(&alphas[1][1..]) {
             Ok(a) => a,
             Err(e) => {
                 println!("\n{}", e);
                 continue;
             }
         };
-        let res = ops::find_prod_override(&a1, &a2, &cfg.metric, &cfg.allowed);
+        let res = algebra::full_product(&a1, &a2);
         println!("{} ^ {} = {}", a1, a2, res);
     }
 }
@@ -56,12 +59,17 @@ fn main() {
     let program = args[0].clone();
 
     let mut opts = Options::new();
-    opts.optopt("c", "config", "provide a custom config to use.", "CONFIG");
+    opts.optopt(
+        "f",
+        "file",
+        "provide a calculation file to run.",
+        "CALC-FILE",
+    );
     opts.optflag("h", "help", "print this help menu");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
-        Err(f) => panic!(f.to_string()),
+        Err(e) => panic!(e.to_string()),
     };
 
     // Handle help text
@@ -70,19 +78,21 @@ fn main() {
         return;
     }
 
-    // Handle config override
-    let cfg = match matches.opt_str("c") {
-        Some(c) => {
-            config::Config::new(c).unwrap_or_else(|err| {
-                eprintln!("Problem parsing args: {}", err);
-                process::exit(1);
-            })
+    // See if there is a calculation file to run otherwise start the repl.
+    if matches.opt_present("f") {
+        let f = matches.opt_str("f").expect("unreachable");
+        let mut calc_file = calcfile::Calculation::new(f).unwrap_or_else(|err| {
+            eprintln!("Problem parsing calculation file: {}", err);
+            process::exit(1);
+        });
+        if let Err(e) = calc_file.parse() {
+            eprintln!("Error: {}", e);
+            process::exit(1);
         }
-        None => config::Config::new_default(),
-    };
-
-    if let Err(e) = run(cfg) {
-        eprintln!("Error: {}", e);
-        process::exit(1);
+    } else {
+        if let Err(e) = repl() {
+            eprintln!("Error: {}", e);
+            process::exit(1);
+        }
     }
 }

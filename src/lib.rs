@@ -17,10 +17,11 @@ extern crate lazy_static;
 extern crate proptest;
 
 
+pub mod algebra;
+pub mod calcfile;
 pub mod config;
 pub mod consts;
 pub mod types;
-pub mod ops;
 mod error;
 
 pub use error::ArError;

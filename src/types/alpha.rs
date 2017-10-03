@@ -7,8 +7,8 @@ use super::index::*;
 use super::mvec::*;
 use super::pair::*;
 use super::sign::*;
+use super::super::algebra;
 use super::super::consts::{ALLOWED, METRIC};
-use super::super::ops::{ArOps, find_prod_override};
 use Result;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
@@ -36,29 +36,35 @@ impl ops::Mul for Alpha {
     type Output = Alpha;
 
     fn mul(self, rhs: Self) -> Self {
-        find_prod_override(&self, &rhs, &METRIC, &ALLOWED)
+        algebra::find_prod_override(&self, &rhs, &METRIC, &ALLOWED)
     }
 }
 
 
-impl ArOps<Alpha> for Alpha {
+impl algebra::ArFull for Alpha {
     fn ar_prod(&self, _rhs: &Alpha) -> Mvec {
-        let alpha = find_prod_override(&self, _rhs, &METRIC, &ALLOWED);
+        let alpha = algebra::find_prod_override(&self, _rhs, &METRIC, &ALLOWED);
         let mut mvec = Mvec::new();
         mvec.add_pair(Pair::from_alpha(alpha)).unwrap();
         mvec
     }
+}
 
+impl algebra::ArDivInto for Alpha {
     fn ar_div_into(&self, _rhs: &Alpha) -> Mvec {
         panic!("Not implemented yet");
         // Mvec::new()
     }
+}
 
+impl algebra::ArDivBy for Alpha {
     fn ar_div_by(&self, _rhs: &Alpha) -> Mvec {
         panic!("Not implemented yet");
         // Mvec::new()
     }
+}
 
+impl algebra::ArAdd for Alpha {
     fn ar_add(&self, _rhs: &Alpha) -> Mvec {
         let mut mvec = Mvec::new();
         mvec.add_pair(Pair::from_alpha(self.clone())).unwrap();

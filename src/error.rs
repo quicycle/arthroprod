@@ -15,6 +15,8 @@ pub enum ArError {
     /// There was an attempt to create an invalid config variable (ALLOWED,
     /// METRIC, TARGETS).
     InvalidConfig(String),
+    /// Invalid calculation file
+    InvalidCalcFile(String),
 }
 
 impl Error for ArError {
@@ -30,6 +32,7 @@ impl fmt::Display for ArError {
             ArError::InvalidComponentOrder(ref c) => write!(f, "Attempt to construct a component of order > 4: {}", c),
             ArError::ComponentNotAllowed(ref c) => write!(f, "Attempt to use invalid component: {}", c),
             ArError::InvalidConfig(ref s) => write!(f, "Attempt to create invalid config variable: {}", s),
+            ArError::InvalidCalcFile(ref s) => write!(f, "Problem parsing calculation file: {}", s),
         }
     }
 }

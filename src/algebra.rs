@@ -55,18 +55,23 @@ use super::types::{Alpha, Component, Index, KeyVec, Mvec, Sign};
 use std::collections::HashMap;
 
 
-/// Allow elements to be combined under the algebra.
-pub trait ArOps<RHS = Self> {
-    /// Full product
+/// Full product
+pub trait ArFull<RHS = Self> {
     fn ar_prod(&self, _rhs: &RHS) -> Mvec;
+}
 
-    /// Division: LHS into RHS
+/// Division: LHS into RHS
+pub trait ArDivInto<RHS = Self> {
     fn ar_div_into(&self, _rhs: &RHS) -> Mvec;
+}
 
-    /// Division: LHS by RHS
+/// Division: LHS by RHS
+pub trait ArDivBy<RHS = Self> {
     fn ar_div_by(&self, _rhs: &RHS) -> Mvec;
+}
 
-    /// Addition
+/// Addition
+pub trait ArAdd<RHS = Self> {
     fn ar_add(&self, _rhs: &RHS) -> Mvec;
 }
 
@@ -101,9 +106,9 @@ pub trait ArOps<RHS = Self> {
 /// ```
 pub fn full_product<T, S>(i: &T, j: &S) -> Mvec
 where
-    T: ArOps<S>, // T must impl ArOps with RHS == S
+    T: ArFull<S>, // T must impl ArOps with RHS == S
 {
-    i.ar_prod(j)
+    Mvec::from(i.ar_prod(j))
 }
 
 /// Allow the caller to specify a different metric and set of target alphas
