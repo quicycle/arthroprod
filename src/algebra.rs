@@ -94,7 +94,7 @@ pub trait ArAdd<RHS = Self> {
 /// # Examples
 /// ```
 /// use arthroprod::types::{Alpha, Mvec};
-/// use arthroprod::ops::full_product;
+/// use arthroprod::algebra::full_product;
 ///
 /// let a1 = Alpha::new("31").unwrap();
 /// let a2 = Alpha::new("01").unwrap();
@@ -120,7 +120,7 @@ where
 /// # Examples
 /// ```
 /// use arthroprod::types::Alpha;
-/// use arthroprod::ops::find_prod_override;
+/// use arthroprod::algebra::find_prod_override;
 /// use arthroprod::consts::{ALLOWED, METRIC};
 ///
 /// let a1 = Alpha::new("31").unwrap();
