@@ -1,3 +1,5 @@
-mod full_product;
+mod ar_product;
+mod full;
 
-pub use self::full_product::full_product;
+pub use self::ar_product::*;
+pub use self::full::full;

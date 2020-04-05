@@ -1,10 +1,58 @@
-use crate::algebra::{Alpha, Axis, Component, Sign};
+//! Standard operations on AR types: Alphas and Multivectors.
+//!
+//! Finding the product of αs
+//! =========================
+//! This is based on a set of simplification rules based on allowed
+//! manipulations of elements in the algebra.
+//! (NOTE: In all notation, αμ.αν is simplified to αμν)
+//!
+//! (1)   αpμ == αμp == αμ
+//!     'Multiplication by αp (point) is idempotent. (αp is the identity)'
+//!
+//! (2i)  α0^2 == αp
+//!     'Repeated α0 indices can just be removed.'
+//!
+//! (2ii) αi^2 == -αp
+//!     'Repeated αi indices can be removed by negating'
+//!
+//! (2iii) α^2 == +-αp
+//!     'All elements square to either +αp or -αp'
+//!
+//! (3)   αμν == -ανμ
+//!     'Adjacent indices can be popped by negating.'
+//!
+//! Counting pops
+//! =============
+//! I am converting the current product into an array of integers in order to
+//! allow for the different orderings of each final product in a flexible way.
+//! Ordering is a mapping of index (0,1,2,3) to position in the final product.
+//! This should be stable regardless of how we define the 16 elements of the
+//! algebra.
+//!
+//! The algorithm makes use of the fact that for any ordering we can dermine the
+//! whether the total number of pops is odd or even by looking at the first
+//! element alone and then recursing on the rest of the ordering as a
+//! sub-problem. If the final position of the first element is even then it
+//! will take an odd number of pops to correctly position it. We can then look
+//! only at the remaining elements and re-label them with indices 1->(n-1) and
+//! repeat the process until we are done.
+//!
 
-// Compute the full product of i and j under the +--- metric and component ordering
-// conventions given in ALLOWED_ALPHA_COMPONENTS.
-// This function will panic if invalid components are somehow provided in order to
-// prevent malformed calculations from running.
-pub fn full_product(i: &Alpha, j: &Alpha) -> Alpha {
+use crate::algebra::{Alpha, Axis, Component, Sign, Term};
+
+/// Types that implement AR are able to be consumed by any of the library operations
+/// provided by arthroprod. The return of these library functions is always a
+/// MultiVector.
+pub trait AR {
+    /// Convert the type to a slice of terms (defaulting to symbolic Xi values)
+    fn as_terms(&self) -> Vec<Term>;
+}
+
+/// Compute the full product of i and j under the +--- metric and component ordering
+/// conventions given in ALLOWED_ALPHA_COMPONENTS.
+/// This function will panic if invalid components are somehow provided in order to
+/// prevent malformed calculations from running.
+pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
     let mut sign = i.sign().combine(&j.sign());
     let i_component = i.component();
     let j_component = j.component();
@@ -196,8 +244,8 @@ mod tests {
                 let a1 = Alpha::new(Sign::Pos, Component::Vector(*i)).unwrap();
                 let a2 = Alpha::new(Sign::Pos, Component::Vector(*j)).unwrap();
 
-                let res1 = full_product(&a1, &a2);
-                let res2 = full_product(&a2, &a1);
+                let res1 = ar_product(&a1, &a2);
+                let res2 = ar_product(&a2, &a1);
 
                 assert_eq!(res1.component(), res2.component());
                 assert_ne!(res1.sign(), res2.sign());

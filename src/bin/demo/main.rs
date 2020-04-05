@@ -9,4 +9,10 @@ fn main() {
 
     println!("{:?} -> {}", a1, a1);
     println!("{:?} -> {}", a2, a2);
+
+    let res = full(&a1, &a2);
+    println!("{:?}", res);
+    println!("result = {}", res);
+
+    println!("{}", term!(1 2 3));
 }

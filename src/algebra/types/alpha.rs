@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::algebra::{Axis, Component, Sign};
+use crate::algebra::{Axis, Component, Sign, Term, AR};
 
 /// When creating Alphas only the following components are valid
 pub const ALLOWED_ALPHA_COMPONENTS: [Component; 16] = [
@@ -30,6 +30,12 @@ pub const ALLOWED_ALPHA_COMPONENTS: [Component; 16] = [
 pub struct Alpha {
     comp: Component,
     sign: Sign,
+}
+
+impl AR for Alpha {
+    fn as_terms(&self) -> Vec<Term> {
+        vec![Term::from_alpha(self.clone())]
+    }
 }
 
 impl fmt::Display for Alpha {
