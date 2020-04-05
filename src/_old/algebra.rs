@@ -54,7 +54,6 @@ use super::config::Allowed;
 use super::types::{Alpha, Component, Index, KeyVec, Mvec, Sign};
 use std::collections::HashMap;
 
-
 /// Full product
 pub trait ArFull<RHS = Self> {
     fn ar_prod(&self, _rhs: &RHS) -> Mvec;
@@ -131,7 +130,12 @@ where
 /// assert_eq!(find_prod_override(&a1, &a1, &METRIC, &ALLOWED),
 /// Alpha::new("-p").unwrap());
 /// ```
-pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, allowed: &Allowed) -> Alpha {
+pub fn find_prod_override(
+    i: &Alpha,
+    j: &Alpha,
+    metric: &HashMap<Index, Sign>,
+    allowed: &Allowed,
+) -> Alpha {
     let targets = allowed.targets();
     let mut sign = i.sign().combine_with(&j.sign());
 
@@ -245,12 +249,11 @@ pub fn find_prod_override(i: &Alpha, j: &Alpha, metric: &HashMap<Index, Sign>, a
     return Alpha::from_comp(&comp, &sign);
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::super::consts::{ALLOWED, METRIC};
     use super::super::consts::ALPHAS;
+    use super::super::consts::{ALLOWED, METRIC};
+    use super::*;
 
     lazy_static! {
         static ref POINT: Alpha = Alpha::new("p").unwrap();
@@ -259,7 +262,6 @@ mod tests {
 
     const INDICES: [&str; 4] = ["0", "1", "2", "3"];
     const STR_SIGNS: [&str; 2] = ["", "-"];
-
 
     /// Helper to avoid having to pass METRIC and ALLOWED each time
     fn find_prod(i: &Alpha, j: &Alpha) -> Alpha {

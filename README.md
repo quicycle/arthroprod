@@ -2,7 +2,7 @@
 ================
 _Compute products under Absolute Relativity._
 
-Copyright (C) 2016-2017 Innes D. Anderson-Morrison All rights reserved.
+Copyright (C) 2016-2020 Innes D. Anderson-Morrison All rights reserved.
 
 ![Cayley Table for the Williamson Algebra](cayley.png)
 
