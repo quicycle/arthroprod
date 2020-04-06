@@ -1,5 +1,5 @@
 [package]
-version = "0.1.4"
+version = "0.2.0"
 name = "arthroprod"
 authors = ["Innes Anderson-Morrison <innesdmorrison@gmail.com>"]
 license-file = "LICENSE"
@@ -12,12 +12,13 @@ Clifford Algebra based computation for the theory of Absolute Relativity.
 
 [[bin]]
 doc = false
-name = "aprod"
-path = "src/bin/main.rs"
+name = "aprod-demo"
+path = "src/bin/demo/main.rs"
 
 [dependencies]
-lazy_static = "0.2"
-getopts = "0.2"
+serde = "1.0.36"
+serde_json = "1.0"
+serde_derive = "1.0.36"
 
 [dev-dependencies]
-proptest = "0.3.1"
+test-case = "1.0"
