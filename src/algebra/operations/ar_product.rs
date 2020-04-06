@@ -81,6 +81,12 @@ pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
     return Alpha::new(sign, comp).unwrap();
 }
 
+/// Compute the full_product inverse of an Alpha element.
+/// This is defined such that x ^ inverse(x) == ap
+pub fn invert_alpha(a: &Alpha) -> Alpha {
+    Alpha::new(a.sign().combine(&ar_product(&a, &a).sign()), a.component()).unwrap()
+}
+
 // NOTE: This is where we are hard coding the +--- metric along with assuming
 //       that we are using conventional sign rules for combining +/-
 fn apply_metric(s: Sign, a: &Axis) -> Sign {

@@ -15,20 +15,26 @@ impl fmt::Display for Term {
 }
 
 impl Term {
-    pub fn new_f64(val: f64, alpha: Alpha) -> Term {
-        let xi = Xi::Real(val);
+    pub fn new(val: f64, sym: String, alpha: Alpha) -> Term {
+        let xi = Xi::new(val, sym);
 
         Term { xi, alpha }
     }
 
-    pub fn new_sym(val: String, alpha: Alpha) -> Term {
-        let xi = Xi::Symbolic(val);
+    pub fn new_f64(val: f64, alpha: Alpha) -> Term {
+        let xi = Xi::new_f64(val);
+
+        Term { xi, alpha }
+    }
+
+    pub fn new_sym(sym: String, alpha: Alpha) -> Term {
+        let xi = Xi::new_symbolic(sym);
 
         Term { xi, alpha }
     }
 
     pub fn from_alpha(alpha: Alpha) -> Term {
-        let xi = Xi::Symbolic(format!("{}", alpha.component()));
+        let xi = Xi::new_symbolic(format!("{}", alpha.component()));
         Term { xi, alpha }
     }
 

@@ -1,11 +1,21 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use crate::algebra::{Component, Term, ALLOWED_ALPHA_COMPONENTS};
+use crate::algebra::{Component, Term, ALLOWED_ALPHA_COMPONENTS, AR};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct MultiVector {
     components: HashMap<Component, Vec<Term>>,
+}
+
+impl AR for MultiVector {
+    fn as_terms(&self) -> Vec<Term> {
+        self.components
+            .values()
+            .flatten()
+            .map(|t| t.clone())
+            .collect()
+    }
 }
 
 impl fmt::Display for MultiVector {
