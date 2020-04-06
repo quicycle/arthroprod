@@ -22,11 +22,13 @@ fn div_single_terms(left: &Term, right: &Term) -> MultiVector {
     let (wleft, sleft) = left.xi().weight_and_symbol();
     let (wright, sright) = right.xi().weight_and_symbol();
 
-    let value = wleft * wright;
+    let weight = wleft * wright;
     let symbol = format!("{}\\{}", sleft, sright);
     let alpha = ar_product(&invert_alpha(&left.alpha()), &right.alpha());
 
-    MultiVector::from_terms(vec![Term::new(value, symbol, alpha)])
+    let mut m = MultiVector::new();
+    m.add_term(weight * Term::new(symbol, alpha));
+    return m;
 }
 
 fn apply_van_der_mark(left: Vec<Term>, right: Vec<Term>) -> MultiVector {

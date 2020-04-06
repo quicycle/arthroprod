@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::Neg;
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
+#[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 pub enum Sign {
     Pos,
     Neg,

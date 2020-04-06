@@ -26,7 +26,7 @@ pub const ALLOWED_ALPHA_COMPONENTS: [Component; 16] = [
     Component::Bivector(Axis::T, Axis::Z),
 ];
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
+#[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 pub struct Alpha {
     comp: Component,
     sign: Sign,

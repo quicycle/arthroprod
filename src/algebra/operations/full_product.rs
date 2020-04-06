@@ -20,11 +20,11 @@ pub fn full<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
             let aright = tright.alpha();
             let (wright, sright) = tleft.xi().weight_and_symbol();
 
-            let value = wleft * wright;
+            let weight = wleft * wright;
             let symbol = format!("{}.{}", sleft, sright);
             let alpha = ar_product(&aleft, &aright);
 
-            terms.push(Term::new(value, symbol, alpha));
+            terms.push(weight * Term::new(symbol, alpha));
         }
     }
 

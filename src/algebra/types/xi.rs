@@ -1,14 +1,28 @@
 use std::fmt;
+use std::ops;
 
-#[derive(Debug, PartialOrd, PartialEq, Clone)]
+#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord)]
 pub struct Xi {
-    weight: f64,
+    weight: isize,
     symbol: String,
+}
+
+impl Xi {
+    pub fn new(n: isize, s: String) -> Xi {
+        Xi {
+            weight: n,
+            symbol: s,
+        }
+    }
+
+    pub fn weight_and_symbol(&self) -> (isize, String) {
+        (self.weight, self.symbol.clone())
+    }
 }
 
 impl fmt::Display for Xi {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.weight == 1.0 {
+        if self.weight == 1 {
             write!(f, "ξ{}", self.symbol)
         } else {
             write!(f, "({})ξ{}", self.weight, self.symbol)
@@ -16,29 +30,32 @@ impl fmt::Display for Xi {
     }
 }
 
-impl Xi {
-    pub fn new(n: f64, s: String) -> Xi {
+impl ops::Mul<isize> for Xi {
+    type Output = Self;
+
+    fn mul(self, rhs: isize) -> Self::Output {
         Xi {
-            weight: n,
-            symbol: s,
+            weight: self.weight * rhs,
+            symbol: self.symbol,
         }
     }
+}
 
-    pub fn new_f64(n: f64) -> Xi {
-        Xi {
-            weight: n,
-            symbol: String::new(),
-        }
+impl ops::Mul<Xi> for isize {
+    type Output = Xi;
+
+    fn mul(self, rhs: Xi) -> Self::Output {
+        rhs * self
     }
+}
 
-    pub fn new_symbolic(s: String) -> Xi {
+impl ops::Neg for Xi {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
         Xi {
-            weight: 1.0,
-            symbol: s,
+            weight: -self.weight,
+            symbol: self.symbol,
         }
-    }
-
-    pub fn weight_and_symbol(&self) -> (f64, String) {
-        (self.weight, self.symbol.clone())
     }
 }
