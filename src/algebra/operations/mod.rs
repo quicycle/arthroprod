@@ -1,7 +1,11 @@
 mod ar_product;
-mod div;
-mod full;
+mod division;
+mod full_product;
+mod reverse;
 
-pub use self::ar_product::{ar_product, invert_alpha, AR};
-pub use self::div::div;
-pub use self::full::full;
+pub use self::{
+    ar_product::{ar_product, invert_alpha, AR},
+    division::div,
+    full_product::full,
+    reverse::rev,
+};
