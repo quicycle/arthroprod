@@ -9,15 +9,6 @@ macro_rules! alpha(
             Alpha::try_from_axes(sign, &axes).unwrap()
         }
     };
-
-    (~ $($num:expr) +) => {
-        {
-            let mut sign = Sign::Neg;
-            let mut axes = Vec::new();
-            $(axes.push(Axis::try_from_u8($num).unwrap());)+
-            Alpha::try_from_axes(sign, &axes).unwrap()
-        }
-    };
 );
 
 #[macro_export]
@@ -28,16 +19,6 @@ macro_rules! term(
             let mut axes = Vec::new();
             $(axes.push(Axis::try_from_u8($num).unwrap());)+
             let alpha = Alpha::try_from_axes(sign, &axes).unwrap();
-            Term::from_alpha(alpha)
-        }
-    };
-
-    (~ $($num:expr) +) => {
-        {
-            let mut sign = Sign::Neg;
-            let mut axes = Vec::new();
-            $(axes.push(Axis::try_from_u8($num).unwrap());)+
-            let alpha = Alpha::try_from_axes(sign, &axes).unwrap()
             Term::from_alpha(alpha)
         }
     };

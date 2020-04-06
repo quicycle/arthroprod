@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops::Neg};
 
 use crate::algebra::{Alpha, Xi};
 
@@ -6,6 +6,17 @@ use crate::algebra::{Alpha, Xi};
 pub struct Term {
     xi: Xi,
     alpha: Alpha,
+}
+
+impl Neg for Term {
+    type Output = Term;
+
+    fn neg(self) -> Self::Output {
+        Term {
+            xi: self.xi,
+            alpha: -self.alpha,
+        }
+    }
 }
 
 impl fmt::Display for Term {

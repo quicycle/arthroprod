@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt, ops::Neg};
 
 use crate::algebra::{Axis, Component, Sign, Term, AR};
 
@@ -35,6 +35,17 @@ pub struct Alpha {
 impl AR for Alpha {
     fn as_terms(&self) -> Vec<Term> {
         vec![Term::from_alpha(self.clone())]
+    }
+}
+
+impl Neg for Alpha {
+    type Output = Alpha;
+
+    fn neg(self) -> Self::Output {
+        Alpha {
+            comp: self.comp,
+            sign: -self.sign,
+        }
     }
 }
 

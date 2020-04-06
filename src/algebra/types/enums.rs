@@ -1,4 +1,5 @@
 use std::fmt;
+use std::ops::Neg;
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 pub enum Sign {
@@ -21,6 +22,17 @@ impl fmt::Display for Sign {
         match *self {
             Sign::Pos => write!(f, "+"),
             Sign::Neg => write!(f, "-"),
+        }
+    }
+}
+
+impl Neg for Sign {
+    type Output = Sign;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            Sign::Neg => Sign::Pos,
+            Sign::Pos => Sign::Neg,
         }
     }
 }
