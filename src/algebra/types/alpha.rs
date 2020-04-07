@@ -1,4 +1,5 @@
-use std::{fmt, ops::Neg};
+use std::fmt;
+use std::ops;
 
 use crate::algebra::{Axis, Component, Sign, Term, AR};
 
@@ -38,7 +39,7 @@ impl AR for Alpha {
     }
 }
 
-impl Neg for Alpha {
+impl ops::Neg for Alpha {
     type Output = Alpha;
 
     fn neg(self) -> Self::Output {

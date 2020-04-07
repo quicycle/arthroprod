@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fmt;
+use std::ops;
 
 use crate::algebra::{Component, Term, ALLOWED_ALPHA_COMPONENTS, AR};
 
@@ -11,34 +12,6 @@ pub struct MultiVector {
 impl AR for MultiVector {
     fn as_terms(&self) -> Vec<Term> {
         self.terms.clone()
-    }
-}
-
-impl fmt::Display for MultiVector {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = ALLOWED_ALPHA_COMPONENTS
-            .iter()
-            .map(|c| {
-                let for_comp = self.get(c);
-                if for_comp.len() > 0 {
-                    Some(format!("{}),", {
-                        let mut vec_str = for_comp
-                            .iter()
-                            .fold(String::from(format!("  a{}: (", c)), |s, val| {
-                                format!("{}{}, ", s, val.xi())
-                            });
-                        let desired_len = vec_str.len() - 2;
-                        vec_str.split_off(desired_len);
-                        vec_str
-                    }))
-                } else {
-                    None
-                }
-            })
-            .filter_map(|s| s)
-            .fold(String::from(""), |s, line| format!("{}\n{}", s, line));
-
-        write!(f, "{{{}\n}}", s)
     }
 }
 
@@ -84,5 +57,80 @@ impl MultiVector {
         });
 
         self.terms = seen.drain().map(|(_, v)| v).flatten().collect()
+    }
+}
+
+impl ops::Mul<isize> for MultiVector {
+    type Output = MultiVector;
+
+    fn mul(self, rhs: isize) -> Self::Output {
+        MultiVector::from_terms(self.terms.iter().map(|t| t.clone() * rhs).collect())
+    }
+}
+
+impl ops::Add for MultiVector {
+    type Output = MultiVector;
+
+    fn add(self, rhs: MultiVector) -> Self::Output {
+        let mut terms = self.terms.clone();
+        let mut rhs_terms = rhs.terms.clone();
+        terms.append(&mut rhs_terms);
+
+        MultiVector::from_terms(terms)
+    }
+}
+
+impl ops::Add<Term> for MultiVector {
+    type Output = MultiVector;
+
+    fn add(self, rhs: Term) -> Self::Output {
+        let mut terms = self.terms.clone();
+        terms.push(rhs);
+
+        MultiVector::from_terms(terms)
+    }
+}
+
+impl ops::Sub for MultiVector {
+    type Output = MultiVector;
+
+    fn sub(self, rhs: MultiVector) -> Self::Output {
+        self + (-rhs)
+    }
+}
+
+impl ops::Neg for MultiVector {
+    type Output = MultiVector;
+
+    fn neg(self) -> Self::Output {
+        MultiVector::from_terms(self.terms.iter().map(|t| -t.clone()).collect())
+    }
+}
+
+impl fmt::Display for MultiVector {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = ALLOWED_ALPHA_COMPONENTS
+            .iter()
+            .map(|c| {
+                let for_comp = self.get(c);
+                if for_comp.len() > 0 {
+                    Some(format!("{}),", {
+                        let mut vec_str = for_comp
+                            .iter()
+                            .fold(String::from(format!("  a{}: (", c)), |s, val| {
+                                format!("{}{}, ", s, val.xi())
+                            });
+                        let desired_len = vec_str.len() - 2;
+                        vec_str.split_off(desired_len);
+                        vec_str
+                    }))
+                } else {
+                    None
+                }
+            })
+            .filter_map(|s| s)
+            .fold(String::from(""), |s, line| format!("{}\n{}", s, line));
+
+        write!(f, "{{{}\n}}", s)
     }
 }
