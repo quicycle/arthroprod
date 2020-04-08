@@ -26,7 +26,7 @@ fn gcd(n: isize, m: isize) -> isize {
     return a;
 }
 
-#[derive(Hash, Debug, PartialEq, Clone)]
+#[derive(Hash, Debug, PartialEq, Clone, Copy)]
 pub struct Ratio {
     numerator: isize,
     denominator: isize,

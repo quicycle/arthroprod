@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Alpha, Xi};
+use crate::algebra::{Alpha, Ratio, Xi};
 
 #[derive(Debug, PartialOrd, PartialEq, Clone, Hash, Eq, Ord)]
 pub struct Term {
@@ -11,13 +11,13 @@ pub struct Term {
 
 impl Term {
     pub fn new(sym: String, alpha: Alpha) -> Term {
-        let xi = Xi::new(1, sym);
+        let xi = Xi::new(sym);
 
         Term { xi, alpha }
     }
 
     pub fn from_alpha(alpha: Alpha) -> Term {
-        let xi = Xi::new(1, format!("{}", alpha.component()));
+        let xi = Xi::new(format!("{}", alpha.component()));
         Term { xi, alpha }
     }
 
@@ -48,6 +48,25 @@ impl ops::Mul<isize> for Term {
 }
 
 impl ops::Mul<Term> for isize {
+    type Output = Term;
+
+    fn mul(self, rhs: Term) -> Self::Output {
+        rhs * self
+    }
+}
+
+impl ops::Mul<Ratio> for Term {
+    type Output = Self;
+
+    fn mul(self, rhs: Ratio) -> Self::Output {
+        Term {
+            xi: self.xi * rhs,
+            alpha: self.alpha,
+        }
+    }
+}
+
+impl ops::Mul<Term> for Ratio {
     type Output = Term;
 
     fn mul(self, rhs: Term) -> Self::Output {
