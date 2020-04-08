@@ -24,10 +24,6 @@ impl Xi {
             symbol: s,
         }
     }
-
-    pub fn weight_and_symbol(&self) -> (Ratio, String) {
-        (self.weight, self.symbol.clone())
-    }
 }
 
 impl convert::From<(Ratio, String)> for Xi {
@@ -87,6 +83,17 @@ impl ops::Mul<Xi> for Ratio {
 
     fn mul(self, rhs: Xi) -> Self::Output {
         rhs * self
+    }
+}
+
+impl ops::Div<Ratio> for Xi {
+    type Output = Xi;
+
+    fn div(self, rhs: Ratio) -> Self::Output {
+        Xi {
+            weight: self.weight / rhs,
+            symbol: self.symbol,
+        }
     }
 }
 

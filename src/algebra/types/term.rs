@@ -74,6 +74,17 @@ impl ops::Mul<Term> for Ratio {
     }
 }
 
+impl ops::Div<Ratio> for Term {
+    type Output = Term;
+
+    fn div(self, rhs: Ratio) -> Self::Output {
+        Term {
+            xi: self.xi / rhs,
+            alpha: self.alpha,
+        }
+    }
+}
+
 impl ops::Neg for Term {
     type Output = Term;
 

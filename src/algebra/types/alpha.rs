@@ -27,6 +27,9 @@ pub const ALLOWED_ALPHA_COMPONENTS: [Component; 16] = [
     Component::Bivector(Axis::T, Axis::Z),
 ];
 
+/// An Alpha represents a pure element of the algebra without magnitude.
+/// It is composed of 0-4 Dimensions with the number of dimensions determining
+/// its nature: i.e. scalar, vector, bivector, trivector, quadrivector
 #[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
 pub struct Alpha {
     comp: Component,

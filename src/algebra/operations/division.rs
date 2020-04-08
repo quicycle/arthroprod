@@ -20,8 +20,8 @@ pub fn div<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
 
 // dividing left into right (left \ right)
 fn div_single_terms(left: &Term, right: &Term) -> MultiVector {
-    let (wleft, sleft) = left.xi().weight_and_symbol();
-    let (wright, sright) = right.xi().weight_and_symbol();
+    let (wleft, sleft) = left.xi().into();
+    let (wright, sright) = right.xi().into();
 
     let weight = wright / wleft; // dividing into not by
     let symbol = format!("{}\\{}", sleft, sright);
@@ -34,18 +34,13 @@ fn div_single_terms(left: &Term, right: &Term) -> MultiVector {
 
 // dividing left into right (left \ right)
 fn apply_van_der_mark<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
-    panic!("TODO: need to implement other operations first")
+    let l_dagger = hermitian(left);
+    let l_phi = full(left, &l_dagger);
+    let l_diamond_phi = diamond(&l_phi);
 
-    // TODO: weights need to be rationals rather than isize it seems...
-    // let l_dagger = hermitian(left);
-    // let l_phi = full(left, &l_dagger);
-    // let l_diamond_phi = diamond(&l_phi);
-    // // guaranteed to be a single ap term when computing phi ^ diamond(phi)
-    // let (divisor, _) = full(&l_phi, &l_diamond_phi).as_terms()[0]
-    //     .xi()
-    //     .weight_and_symbol();
+    // guaranteed to be a single ap term when computing phi ^ diamond(phi)
+    let (divisor, _) = full(&l_phi, &l_diamond_phi).as_terms()[0].xi().into();
+    let inverse = full(&l_dagger, &l_diamond_phi);
 
-    // let inverse = full(&l_dagger, &l_diamond_phi);
-
-    // full(&inverse, right) / divisor
+    full(&inverse, right) / divisor
 }
