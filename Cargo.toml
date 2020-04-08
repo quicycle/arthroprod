@@ -9,6 +9,7 @@ readme = "README.md"
 description = """
 Clifford Algebra based computation for the theory of Absolute Relativity.
 """
+edition = "2018"
 
 [[bin]]
 doc = false

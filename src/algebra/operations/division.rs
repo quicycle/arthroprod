@@ -18,11 +18,12 @@ pub fn div<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
     }
 }
 
+// dividing left into right (left \ right)
 fn div_single_terms(left: &Term, right: &Term) -> MultiVector {
     let (wleft, sleft) = left.xi().weight_and_symbol();
     let (wright, sright) = right.xi().weight_and_symbol();
 
-    let weight = wleft * wright;
+    let weight = wright / wleft; // dividing into not by
     let symbol = format!("{}\\{}", sleft, sright);
     let alpha = ar_product(&invert_alpha(&left.alpha()), &right.alpha());
 
@@ -31,6 +32,7 @@ fn div_single_terms(left: &Term, right: &Term) -> MultiVector {
     return m;
 }
 
+// dividing left into right (left \ right)
 fn apply_van_der_mark<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
     panic!("TODO: need to implement other operations first")
 
