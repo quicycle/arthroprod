@@ -21,15 +21,15 @@ impl AR for MultiVector {
     fn as_terms(&self) -> Vec<Term> {
         self.terms.clone()
     }
+
+    fn from_terms(terms: Vec<Term>) -> Self {
+        MultiVector { terms }
+    }
 }
 
 impl MultiVector {
     pub fn new() -> MultiVector {
         MultiVector { terms: vec![] }
-    }
-
-    pub fn from_terms(terms: Vec<Term>) -> MultiVector {
-        MultiVector { terms }
     }
 
     pub fn add_term(&mut self, term: Term) {

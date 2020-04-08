@@ -269,6 +269,7 @@ mod tests {
         assert_eq!(left.cmp(&right), ord);
     }
 
+    #[test]
     fn equality_works() {
         assert_eq!(Ratio::new(2, 4), Ratio::new(1, 2));
         assert_eq!(Ratio::new(4, 2), 2);

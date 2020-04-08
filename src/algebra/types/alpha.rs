@@ -40,6 +40,14 @@ impl AR for Alpha {
     fn as_terms(&self) -> Vec<Term> {
         vec![Term::from_alpha(self.clone())]
     }
+
+    fn from_terms(terms: Vec<Term>) -> Self {
+        if terms.len() != 1 {
+            panic!("Can only construct an Alpha from a single term")
+        };
+
+        terms[0].alpha()
+    }
 }
 
 impl ops::Neg for Alpha {

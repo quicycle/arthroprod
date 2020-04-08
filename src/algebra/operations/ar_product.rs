@@ -46,6 +46,7 @@ use crate::algebra::{Alpha, Axis, Component, Sign, Term};
 pub trait AR {
     /// Convert the type to a slice of terms (defaulting to symbolic Xi values)
     fn as_terms(&self) -> Vec<Term>;
+    fn from_terms(terms: Vec<Term>) -> Self;
 }
 
 /// Compute the full product of i and j under the +--- metric and component ordering
@@ -206,7 +207,7 @@ fn permuted_indices<T: Ord>(s1: &[T], s2: &[T]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algebra::{Axis, ALLOWED_ALPHA_COMPONENTS};
+    use crate::algebra::{Alpha, Axis, Component, ALLOWED_ALPHA_COMPONENTS};
 
     #[test]
     fn target_ordering_is_always_correct_for_allowed() {
@@ -256,6 +257,18 @@ mod tests {
                 assert_eq!(res1.component(), res2.component());
                 assert_ne!(res1.sign(), res2.sign());
             }
+        }
+    }
+
+    #[test]
+    fn alphas_invert_through_ap() {
+        let ap = Alpha::new(Sign::Pos, Component::Point).unwrap();
+
+        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+            let alpha = Alpha::new(Sign::Pos, *c).unwrap();
+            let inv = invert_alpha(&alpha);
+
+            assert_eq!(ar_product(&alpha, &inv), ap);
         }
     }
 }
