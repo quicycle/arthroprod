@@ -7,19 +7,21 @@ use crate::algebra::{ar_product, diamond, full, hermitian, invert_alpha, MultiVe
 /// Divide left into right. When left and right are both terms or alphas, this is a relatively
 /// simple inversion of left and then forming the full product. For MultiVectors this requires
 /// a full general inverse using the Van Der Mark
-pub fn div<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
+pub fn div<L: AR, R: AR, T: AR>(left: &L, right: &R) -> T {
     let lterms = left.as_terms();
     let rterms = right.as_terms();
 
-    if lterms.len() == 1 && rterms.len() == 1 {
+    let terms = if lterms.len() == 1 && rterms.len() == 1 {
         div_single_terms(&lterms[0], &rterms[0])
     } else {
         apply_van_der_mark(left, right)
-    }
+    };
+
+    T::from_terms(terms)
 }
 
 // dividing left into right (left \ right)
-fn div_single_terms(left: &Term, right: &Term) -> MultiVector {
+fn div_single_terms(left: &Term, right: &Term) -> Vec<Term> {
     let (wleft, sleft) = left.xi().into();
     let (wright, sright) = right.xi().into();
 
@@ -27,20 +29,20 @@ fn div_single_terms(left: &Term, right: &Term) -> MultiVector {
     let symbol = format!("{}\\{}", sleft, sright);
     let alpha = ar_product(&invert_alpha(&left.alpha()), &right.alpha());
 
-    let mut m = MultiVector::new();
-    m.add_term(weight * Term::new(symbol, alpha));
-    return m;
+    vec![weight * Term::new(symbol, alpha)]
 }
 
 // dividing left into right (left \ right)
-fn apply_van_der_mark<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
+fn apply_van_der_mark<L: AR, R: AR>(left: &L, right: &R) -> Vec<Term> {
     let l_dagger = hermitian(left);
-    let l_phi = full(left, &l_dagger);
+    let l_phi: MultiVector = full(left, &l_dagger);
     let l_diamond_phi = diamond(&l_phi);
 
     // guaranteed to be a single ap term when computing phi ^ diamond(phi)
-    let (divisor, _) = full(&l_phi, &l_diamond_phi).as_terms()[0].xi().into();
-    let inverse = full(&l_dagger, &l_diamond_phi);
+    let t: Term = full(&l_phi, &l_diamond_phi);
+    let (divisor, _) = t.as_terms()[0].xi().into();
+    let inverse: MultiVector = full(&l_dagger, &l_diamond_phi);
+    let product: MultiVector = full(&inverse, right);
 
-    full(&inverse, right) / divisor
+    (product / divisor).as_terms()
 }

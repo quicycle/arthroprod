@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Alpha, Ratio, Xi, AR};
+use crate::algebra::{Alpha, Ratio, Sign, Xi, AR};
 
 #[derive(Debug, PartialOrd, PartialEq, Clone, Hash, Eq, Ord)]
 pub struct Term {
@@ -52,6 +52,15 @@ impl Term {
 
     pub fn alpha(&self) -> Alpha {
         self.alpha.clone()
+    }
+
+    pub fn weight(&self) -> Ratio {
+        let (weight, _) = self.xi.clone().into();
+
+        match self.alpha.sign() {
+            Sign::Pos => weight,
+            Sign::Neg => -weight,
+        }
     }
 
     fn ensure_sign_on_alpha(&mut self) {

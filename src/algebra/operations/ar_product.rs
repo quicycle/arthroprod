@@ -1,5 +1,3 @@
-//! Standard operations on AR types: Alphas and Multivectors.
-//!
 //! Finding the product of αs
 //! =========================
 //! This is based on a set of simplification rules based on allowed
@@ -41,8 +39,12 @@
 use crate::algebra::{Alpha, Axis, Component, Sign, Term};
 
 /// Types that implement AR are able to be consumed by any of the library operations
-/// provided by arthroprod. The return of these library functions is always a
-/// MultiVector.
+/// provided by arthroprod. The return of these library functions is typically something
+/// that also impliments AR:
+/// ```
+/// let res_alpha: Alpha = full(&a1, &a2);  // A single alpha value
+/// let res_mvec: MultiVector = full(&a1, &a2);  // A MultiVector with a single term with generic Xi
+/// ```
 pub trait AR {
     /// Convert the type to a slice of terms (defaulting to symbolic Xi values)
     fn as_terms(&self) -> Vec<Term>;

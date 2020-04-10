@@ -1,9 +1,9 @@
-use crate::algebra::{ar_product, MultiVector, Term, AR};
+use crate::algebra::{ar_product, Term, AR};
 
 /// The full product between two elements within AR is defined as an extension of the traditional
 /// Clifford product from a Clifford Algebera: we form the Cartesian product of the terms in left
 /// and right using the AR full product.
-pub fn full<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
+pub fn full<L: AR, R: AR, T: AR>(left: &L, right: &R) -> T {
     let mut terms: Vec<Term> = vec![];
 
     for tleft in left.as_terms() {
@@ -22,5 +22,5 @@ pub fn full<L: AR, R: AR>(left: &L, right: &R) -> MultiVector {
         }
     }
 
-    MultiVector::from_terms(terms)
+    T::from_terms(terms)
 }

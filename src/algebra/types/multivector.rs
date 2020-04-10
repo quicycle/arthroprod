@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Component, Ratio, Term, ALLOWED_ALPHA_COMPONENTS, AR};
+use crate::algebra::{Component, Ratio, Sign, Term, Xi, ALLOWED_ALPHA_COMPONENTS, AR};
 
 /// A MultiVector is an unordered collection of a Terms representing a particular
 /// composite quantity within the Algebra. In its simplest form, a MultiVector is
@@ -44,27 +44,39 @@ impl MultiVector {
             .collect()
     }
 
-    pub fn cancel_terms(&mut self) {
-        let mut seen: HashMap<Term, Vec<Term>> = HashMap::new();
+    /// Combine together term weights with matching alphas and Xi symbols
+    pub fn simplify(&mut self) {
+        let mut groups: HashMap<(Component, String), Vec<Term>> = HashMap::new();
 
-        self.terms.sort();
+        self.terms.iter().cloned().for_each(|t| {
+            let (_, sym) = t.xi().into();
+            let key = (t.alpha().component(), sym);
 
-        self.terms.iter().for_each(|t| {
-            let neg = -(t.clone());
-            if let Some(current) = seen.get_mut(&neg) {
-                if current.len() == 1 {
-                    seen.remove(&t);
-                }
+            if let Some(group) = groups.get_mut(&key) {
+                group.push(t);
             } else {
-                if let Some(current) = seen.get_mut(&t) {
-                    current.push(t.clone());
-                } else {
-                    seen.insert(t.clone(), vec![t.clone()]);
-                }
+                groups.insert(key, vec![t.clone()]);
             };
         });
 
-        self.terms = seen.drain().map(|(_, v)| v).flatten().collect()
+        self.terms = groups
+            .drain()
+            .map(|(_, v)| {
+                v[1..v.len()].iter().fold(v[0].clone(), |acc, t| {
+                    let (w_acc, s) = acc.xi().into();
+                    let (w_t, _) = t.xi().into();
+                    match t.alpha().sign() {
+                        Sign::Pos => {
+                            Term::new_with_xi(Xi::new_weighted(w_acc + w_t, s), acc.alpha())
+                        }
+                        Sign::Neg => {
+                            Term::new_with_xi(Xi::new_weighted(w_acc - w_t, s), acc.alpha())
+                        }
+                    }
+                })
+            })
+            .filter(|t| t.weight() != 0)
+            .collect()
     }
 }
 

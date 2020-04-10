@@ -10,9 +10,14 @@ fn main() {
     println!("{:?} -> {}", a1, a1);
     println!("{:?} -> {}", a2, a2);
 
-    let res = full(&a1, &a2);
-    println!("{:?}", res);
-    println!("result = {}", res);
+    println!("\n[products]\n");
+    let res1: Alpha = full(&a1, &a2);
+    println!("{:?}", res1);
+    println!("result = {}\n", res1);
+
+    let res2: MultiVector = full(&a1, &a2);
+    println!("{:?}", res2);
+    println!("result = {}", res2);
 
     println!("{}", -term!(1 2 3));
 }

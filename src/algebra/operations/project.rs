@@ -1,11 +1,11 @@
 use std::mem;
 
-use crate::algebra::{Component, MultiVector, Term, AR};
+use crate::algebra::{Component, Term, AR};
 
 /// Implementation of the grade-projection operator <A>n: filter terms, leaving only those
 /// that are of the specified grade. 'grade' is required only to give the desired output
 /// grade, the value of the component passed is ignored.
-pub fn project<T: AR>(arg: &T, grade: &Component) -> MultiVector {
+pub fn project<T: AR>(arg: &T, grade: &Component) -> T {
     let terms: Vec<Term> = arg
         .as_terms()
         .iter()
@@ -13,5 +13,5 @@ pub fn project<T: AR>(arg: &T, grade: &Component) -> MultiVector {
         .cloned()
         .collect();
 
-    MultiVector::from_terms(terms)
+    T::from_terms(terms)
 }

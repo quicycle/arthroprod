@@ -20,11 +20,11 @@
 //! grade 0 -> 4, we can show that the number of pops required for reversing
 //! an Alpha of grade n is the (n-1)th triangular number.
 
-use crate::algebra::{Component, MultiVector, Term, AR};
+use crate::algebra::{Component, Term, AR};
 
 /// Reverse the order basis elements within an object and then resolve back into
 /// permitted Alpha values. In notation, this is denoted with an over tilde (~).
-pub fn rev<T: AR>(arg: &T) -> MultiVector {
+pub fn rev<T: AR, U: AR>(arg: &T) -> U {
     let mut terms: Vec<Term> = vec![];
 
     for term in arg.as_terms() {
@@ -34,5 +34,5 @@ pub fn rev<T: AR>(arg: &T) -> MultiVector {
         }
     }
 
-    MultiVector::from_terms(terms)
+    U::from_terms(terms)
 }

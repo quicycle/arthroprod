@@ -2,7 +2,7 @@ use crate::algebra::{full, Alpha, Axis, MultiVector, Sign, AR};
 
 /// The dual of a Multivector is defined as being '-a0123 ^ M' and is denoted
 /// with an overbar.
-pub fn dual<T: AR>(arg: &T) -> MultiVector {
+pub fn dual<T: AR>(arg: &T) -> T {
     let axes = [0, 1, 2, 3]
         .iter()
         .map(|n| Axis::try_from_u8(*n).unwrap())
@@ -14,9 +14,10 @@ pub fn dual<T: AR>(arg: &T) -> MultiVector {
 
 /// Compute the product of M ^ dual(M)
 pub fn mm_bar<T: AR>(arg: &T, cancel_term: bool) -> MultiVector {
-    let mut result = full(arg, &dual(arg));
+    let arg_dual: T = dual(arg);
+    let mut result: MultiVector = full(arg, &arg_dual);
     if cancel_term {
-        result.cancel_terms();
+        result.simplify();
     };
 
     return result;
