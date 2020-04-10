@@ -6,6 +6,7 @@ macro_rules! alpha(
             let mut sign = Sign::Pos;
             let mut axes = Vec::new();
             $(axes.push(Axis::try_from_u8($num).unwrap());)+
+
             Alpha::try_from_axes(sign, &axes).unwrap()
         }
     };
@@ -19,7 +20,32 @@ macro_rules! term(
             let mut axes = Vec::new();
             $(axes.push(Axis::try_from_u8($num).unwrap());)+
             let alpha = Alpha::try_from_axes(sign, &axes).unwrap();
+
             Term::from_alpha(alpha)
+        }
+    };
+
+    ($sym:tt, $($num:expr) +) => {
+        {
+            let mut sign = Sign::Pos;
+            let mut axes = Vec::new();
+            let symbol = String::from($sym);
+            $(axes.push(Axis::try_from_u8($num).unwrap());)+
+            let alpha = Alpha::try_from_axes(sign, &axes).unwrap();
+
+            Term::new(symbol, alpha)
+        }
+    };
+);
+
+#[macro_export]
+macro_rules! mvec(
+    [$($ar_elem:expr),+] => {
+        {
+            let mut terms = Vec::new();
+            $(terms.extend($ar_elem.as_terms());)+
+
+            MultiVector::from_terms(terms)
         }
     };
 );

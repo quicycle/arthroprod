@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Component, Ratio, Sign, Term, Xi, ALLOWED_ALPHA_COMPONENTS, AR};
+use crate::algebra::{Component, Magnitude, Sign, Term, Xi, ALLOWED_ALPHA_COMPONENTS, AR};
 
 /// A MultiVector is an unordered collection of a Terms representing a particular
 /// composite quantity within the Algebra. In its simplest form, a MultiVector is
@@ -12,7 +12,7 @@ use crate::algebra::{Component, Ratio, Sign, Term, Xi, ALLOWED_ALPHA_COMPONENTS,
 /// In practice, almost all arpy computations are done using MultiVectors as their
 /// primary data structure so there are a number of methods designed for aiding in
 /// simplifying such computations.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct MultiVector {
     terms: Vec<Term>,
 }
@@ -75,7 +75,7 @@ impl MultiVector {
                     }
                 })
             })
-            .filter(|t| t.weight() != 0)
+            .filter(|t| t.magnitude() != 0)
             .collect()
     }
 }
@@ -96,15 +96,15 @@ impl ops::Mul<MultiVector> for isize {
     }
 }
 
-impl ops::Mul<Ratio> for MultiVector {
+impl ops::Mul<Magnitude> for MultiVector {
     type Output = MultiVector;
 
-    fn mul(self, rhs: Ratio) -> Self::Output {
+    fn mul(self, rhs: Magnitude) -> Self::Output {
         MultiVector::from_terms(self.terms.iter().map(|t| t.clone() * rhs).collect())
     }
 }
 
-impl ops::Mul<MultiVector> for Ratio {
+impl ops::Mul<MultiVector> for Magnitude {
     type Output = MultiVector;
 
     fn mul(self, rhs: MultiVector) -> Self::Output {
@@ -112,10 +112,10 @@ impl ops::Mul<MultiVector> for Ratio {
     }
 }
 
-impl ops::Div<Ratio> for MultiVector {
+impl ops::Div<Magnitude> for MultiVector {
     type Output = MultiVector;
 
-    fn div(self, rhs: Ratio) -> Self::Output {
+    fn div(self, rhs: Magnitude) -> Self::Output {
         MultiVector::from_terms(self.terms.iter().map(|t| t.clone() / rhs).collect())
     }
 }

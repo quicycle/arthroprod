@@ -1,9 +1,9 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Alpha, Ratio, Sign, Xi, AR};
+use crate::algebra::{Alpha, Magnitude, Xi, AR};
 
-#[derive(Debug, PartialOrd, PartialEq, Clone, Hash, Eq, Ord)]
+#[derive(Debug, PartialOrd, PartialEq, Clone, Hash, Eq, Ord, Serialize, Deserialize)]
 pub struct Term {
     xi: Xi,
     alpha: Alpha,
@@ -25,25 +25,21 @@ impl AR for Term {
 
 impl Term {
     pub fn new(sym: String, alpha: Alpha) -> Term {
-        let mut t = Term {
+        Term {
             xi: Xi::new(sym),
             alpha: alpha,
-        };
-        t.ensure_sign_on_alpha();
-
-        return t;
+        }
     }
 
     pub fn new_with_xi(xi: Xi, alpha: Alpha) -> Term {
-        let mut t = Term { xi, alpha };
-        t.ensure_sign_on_alpha();
-
-        return t;
+        Term { xi, alpha }
     }
 
     pub fn from_alpha(alpha: Alpha) -> Term {
-        let xi = Xi::new(format!("{}", alpha.component()));
-        Term { xi, alpha }
+        Term {
+            xi: Xi::new(format!("{}", alpha.component())),
+            alpha: alpha,
+        }
     }
 
     pub fn xi(&self) -> Xi {
@@ -54,21 +50,10 @@ impl Term {
         self.alpha.clone()
     }
 
-    pub fn weight(&self) -> Ratio {
-        let (weight, _) = self.xi.clone().into();
+    pub fn magnitude(&self) -> Magnitude {
+        let (mag, _) = self.xi.clone().into();
 
-        match self.alpha.sign() {
-            Sign::Pos => weight,
-            Sign::Neg => -weight,
-        }
-    }
-
-    fn ensure_sign_on_alpha(&mut self) {
-        let (weight, _) = self.xi.clone().into();
-        if weight < 0.into() {
-            self.xi = -self.xi.clone();
-            self.alpha = -self.alpha;
-        }
+        mag
     }
 }
 
@@ -78,11 +63,31 @@ impl fmt::Display for Term {
     }
 }
 
+impl ops::Mul<usize> for Term {
+    type Output = Self;
+
+    fn mul(self, rhs: usize) -> Self::Output {
+        Term::new_with_xi(self.xi * rhs, self.alpha)
+    }
+}
+
+impl ops::Mul<Term> for usize {
+    type Output = Term;
+
+    fn mul(self, rhs: Term) -> Self::Output {
+        rhs * self
+    }
+}
+
 impl ops::Mul<isize> for Term {
     type Output = Self;
 
     fn mul(self, rhs: isize) -> Self::Output {
-        Term::new_with_xi(self.xi * rhs, self.alpha)
+        if rhs < 0 {
+            Term::new_with_xi(self.xi * (-rhs) as usize, -self.alpha)
+        } else {
+            Term::new_with_xi(self.xi * rhs as usize, self.alpha)
+        }
     }
 }
 
@@ -94,15 +99,15 @@ impl ops::Mul<Term> for isize {
     }
 }
 
-impl ops::Mul<Ratio> for Term {
+impl ops::Mul<Magnitude> for Term {
     type Output = Self;
 
-    fn mul(self, rhs: Ratio) -> Self::Output {
+    fn mul(self, rhs: Magnitude) -> Self::Output {
         Term::new_with_xi(self.xi * rhs, self.alpha)
     }
 }
 
-impl ops::Mul<Term> for Ratio {
+impl ops::Mul<Term> for Magnitude {
     type Output = Term;
 
     fn mul(self, rhs: Term) -> Self::Output {
@@ -110,10 +115,10 @@ impl ops::Mul<Term> for Ratio {
     }
 }
 
-impl ops::Div<Ratio> for Term {
+impl ops::Div<Magnitude> for Term {
     type Output = Term;
 
-    fn div(self, rhs: Ratio) -> Self::Output {
+    fn div(self, rhs: Magnitude) -> Self::Output {
         Term::new_with_xi(self.xi / rhs, self.alpha)
     }
 }

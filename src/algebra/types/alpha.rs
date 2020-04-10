@@ -30,41 +30,10 @@ pub const ALLOWED_ALPHA_COMPONENTS: [Component; 16] = [
 /// An Alpha represents a pure element of the algebra without magnitude.
 /// It is composed of 0-4 Dimensions with the number of dimensions determining
 /// its nature: i.e. scalar, vector, bivector, trivector, quadrivector
-#[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
+#[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Serialize, Deserialize)]
 pub struct Alpha {
-    comp: Component,
     sign: Sign,
-}
-
-impl AR for Alpha {
-    fn as_terms(&self) -> Vec<Term> {
-        vec![Term::from_alpha(self.clone())]
-    }
-
-    fn from_terms(terms: Vec<Term>) -> Self {
-        if terms.len() != 1 {
-            panic!("Can only construct an Alpha from a single term")
-        };
-
-        terms[0].alpha()
-    }
-}
-
-impl ops::Neg for Alpha {
-    type Output = Alpha;
-
-    fn neg(self) -> Self::Output {
-        Alpha {
-            comp: self.comp,
-            sign: -self.sign,
-        }
-    }
-}
-
-impl fmt::Display for Alpha {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}a{}", self.sign, self.comp)
-    }
+    comp: Component,
 }
 
 impl Alpha {
@@ -92,5 +61,36 @@ impl Alpha {
 
     pub fn sign(&self) -> Sign {
         self.sign.clone()
+    }
+}
+
+impl AR for Alpha {
+    fn as_terms(&self) -> Vec<Term> {
+        vec![Term::from_alpha(self.clone())]
+    }
+
+    fn from_terms(terms: Vec<Term>) -> Self {
+        if terms.len() != 1 {
+            panic!("Can only construct an Alpha from a single term")
+        };
+
+        terms[0].alpha()
+    }
+}
+
+impl ops::Neg for Alpha {
+    type Output = Alpha;
+
+    fn neg(self) -> Self::Output {
+        Alpha {
+            sign: -self.sign,
+            comp: self.comp,
+        }
+    }
+}
+
+impl fmt::Display for Alpha {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}a{}", self.sign, self.comp)
     }
 }

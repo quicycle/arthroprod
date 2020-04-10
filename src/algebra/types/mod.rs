@@ -1,8 +1,8 @@
 mod alpha;
 mod enums;
+mod magnitude;
 mod multivector;
-mod ratio;
 mod term;
 mod xi;
 
-pub use self::{alpha::*, enums::*, multivector::*, ratio::*, term::*, xi::*};
+pub use self::{alpha::*, enums::*, magnitude::*, multivector::*, term::*, xi::*};

@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops::Neg;
 
-#[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone)]
+#[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Serialize, Deserialize)]
 pub enum Sign {
     Pos,
     Neg,
@@ -37,7 +37,7 @@ impl Neg for Sign {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Axis {
     T,
     X,
@@ -77,7 +77,7 @@ impl fmt::Display for Axis {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Component {
     Point,
     Vector(Axis),

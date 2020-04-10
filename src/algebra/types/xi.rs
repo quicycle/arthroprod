@@ -2,64 +2,64 @@ use std::convert;
 use std::fmt;
 use std::ops;
 
-use crate::algebra::Ratio;
+use crate::algebra::Magnitude;
 
-#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord)]
+#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
 pub struct Xi {
-    weight: Ratio,
+    magnitude: Magnitude,
     symbol: String,
 }
 
 impl Xi {
     pub fn new(s: String) -> Xi {
         Xi {
-            weight: Ratio::from(1),
+            magnitude: Magnitude::from(1),
             symbol: s,
         }
     }
 
-    pub fn new_weighted(r: Ratio, s: String) -> Xi {
+    pub fn new_weighted(r: Magnitude, s: String) -> Xi {
         Xi {
-            weight: r,
+            magnitude: r,
             symbol: s,
         }
     }
 }
 
-impl convert::From<(Ratio, String)> for Xi {
-    fn from(pair: (Ratio, String)) -> Self {
+impl convert::From<(Magnitude, String)> for Xi {
+    fn from(pair: (Magnitude, String)) -> Self {
         Xi::new_weighted(pair.0, pair.1)
     }
 }
 
-impl convert::Into<(Ratio, String)> for Xi {
-    fn into(self) -> (Ratio, String) {
-        (self.weight, self.symbol)
+impl convert::Into<(Magnitude, String)> for Xi {
+    fn into(self) -> (Magnitude, String) {
+        (self.magnitude, self.symbol)
     }
 }
 
 impl fmt::Display for Xi {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if self.weight == 1 {
+        if self.magnitude == 1 {
             write!(f, "ξ{}", self.symbol)
         } else {
-            write!(f, "({})ξ{}", self.weight, self.symbol)
+            write!(f, "({})ξ{}", self.magnitude, self.symbol)
         }
     }
 }
 
-impl ops::Mul<isize> for Xi {
+impl ops::Mul<usize> for Xi {
     type Output = Self;
 
-    fn mul(self, rhs: isize) -> Self::Output {
+    fn mul(self, rhs: usize) -> Self::Output {
         Xi {
-            weight: self.weight * rhs,
+            magnitude: self.magnitude * rhs,
             symbol: self.symbol,
         }
     }
 }
 
-impl ops::Mul<Xi> for isize {
+impl ops::Mul<Xi> for usize {
     type Output = Xi;
 
     fn mul(self, rhs: Xi) -> Self::Output {
@@ -67,18 +67,18 @@ impl ops::Mul<Xi> for isize {
     }
 }
 
-impl ops::Mul<Ratio> for Xi {
+impl ops::Mul<Magnitude> for Xi {
     type Output = Self;
 
-    fn mul(self, rhs: Ratio) -> Self::Output {
+    fn mul(self, rhs: Magnitude) -> Self::Output {
         Xi {
-            weight: self.weight * rhs,
+            magnitude: self.magnitude * rhs,
             symbol: self.symbol,
         }
     }
 }
 
-impl ops::Mul<Xi> for Ratio {
+impl ops::Mul<Xi> for Magnitude {
     type Output = Xi;
 
     fn mul(self, rhs: Xi) -> Self::Output {
@@ -86,23 +86,12 @@ impl ops::Mul<Xi> for Ratio {
     }
 }
 
-impl ops::Div<Ratio> for Xi {
+impl ops::Div<Magnitude> for Xi {
     type Output = Xi;
 
-    fn div(self, rhs: Ratio) -> Self::Output {
+    fn div(self, rhs: Magnitude) -> Self::Output {
         Xi {
-            weight: self.weight / rhs,
-            symbol: self.symbol,
-        }
-    }
-}
-
-impl ops::Neg for Xi {
-    type Output = Self;
-
-    fn neg(self) -> Self::Output {
-        Xi {
-            weight: -self.weight,
+            magnitude: self.magnitude / rhs,
             symbol: self.symbol,
         }
     }

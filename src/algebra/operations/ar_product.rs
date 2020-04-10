@@ -36,20 +36,7 @@
 //! repeat the process until we are done.
 //!
 
-use crate::algebra::{Alpha, Axis, Component, Sign, Term};
-
-/// Types that implement AR are able to be consumed by any of the library operations
-/// provided by arthroprod. The return of these library functions is typically something
-/// that also impliments AR:
-/// ```
-/// let res_alpha: Alpha = full(&a1, &a2);  // A single alpha value
-/// let res_mvec: MultiVector = full(&a1, &a2);  // A MultiVector with a single term with generic Xi
-/// ```
-pub trait AR {
-    /// Convert the type to a slice of terms (defaulting to symbolic Xi values)
-    fn as_terms(&self) -> Vec<Term>;
-    fn from_terms(terms: Vec<Term>) -> Self;
-}
+use crate::algebra::{Alpha, Axis, Component, Sign};
 
 /// Compute the full product of i and j under the +--- metric and component ordering
 /// conventions given in ALLOWED_ALPHA_COMPONENTS.

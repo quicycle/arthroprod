@@ -12,7 +12,7 @@ pub fn full<L: AR, R: AR, T: AR>(left: &L, right: &R) -> T {
 
         for tright in right.as_terms() {
             let aright = tright.alpha();
-            let (wright, sright) = tleft.xi().into();
+            let (wright, sright) = tright.xi().into();
 
             let weight = wleft * wright;
             let symbol = format!("{}.{}", sleft, sright);

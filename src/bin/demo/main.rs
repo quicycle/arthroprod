@@ -20,4 +20,5 @@ fn main() {
     println!("result = {}", res2);
 
     println!("{}", -term!(1 2 3));
+    println!("{}", term!("foo", 1 2 3));
 }
