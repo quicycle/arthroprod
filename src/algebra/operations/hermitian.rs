@@ -28,11 +28,11 @@ pub fn dagger<T: AR>(arg: &T) -> T {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algebra::{ar_product, Alpha, MultiVector, Term, ALLOWED_ALPHA_COMPONENTS};
+    use crate::algebra::{ar_product, Alpha, MultiVector, Term, ALLOWED_ALPHA_FORMS};
 
     #[test]
     fn hermitian_conjugation_is_correct_for_alphas() {
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let alpha = Alpha::new(Sign::Pos, *c).unwrap();
             let sign = ar_product(&alpha, &alpha).sign();
             let conjugate = hermitian(&alpha);
@@ -43,13 +43,13 @@ mod tests {
 
     #[test]
     fn hermitian_conjugation_is_correct_for_terms() {
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let alpha = Alpha::new(Sign::Pos, *c).unwrap();
             let sign = ar_product(&alpha, &alpha).sign();
-            let term = Term::from_alpha(alpha.clone());
+            let term = Term::new(None, alpha.clone());
             let conjugate = hermitian(&term);
 
-            assert_eq!(conjugate, Term::from_alpha(Alpha::new(sign, *c).unwrap()));
+            assert_eq!(conjugate, Term::new(None, Alpha::new(sign, *c).unwrap()));
         }
     }
 
@@ -58,11 +58,11 @@ mod tests {
         let mut terms: Vec<Term> = vec![];
         let mut negated: Vec<Term> = vec![];
 
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let alpha = Alpha::new(Sign::Pos, *c).unwrap();
             let sign = ar_product(&alpha, &alpha).sign();
-            terms.push(Term::from_alpha(alpha));
-            negated.push(Term::from_alpha(Alpha::new(sign, *c).unwrap()));
+            terms.push(Term::new(None, alpha));
+            negated.push(Term::new(None, Alpha::new(sign, *c).unwrap()));
         }
 
         let conjugate = hermitian(&MultiVector::from_terms(terms));

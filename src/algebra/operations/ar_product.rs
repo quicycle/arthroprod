@@ -36,45 +36,45 @@
 //! repeat the process until we are done.
 //!
 
-use crate::algebra::{Alpha, Axis, Component, Sign};
+use crate::algebra::{Alpha, Axis, Form, Sign};
 
-/// Compute the full product of i and j under the +--- metric and component ordering
-/// conventions given in ALLOWED_ALPHA_COMPONENTS.
-/// This function will panic if invalid components are somehow provided in order to
+/// Compute the full product of i and j under the +--- metric and form ordering
+/// conventions given in ALLOWED_ALPHA_formS.
+/// This function will panic if invalid forms are somehow provided in order to
 /// prevent malformed calculations from running.
 pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
     let mut sign = i.sign().combine(&j.sign());
-    let i_component = i.component();
-    let j_component = j.component();
+    let i_form = i.form();
+    let j_form = j.form();
 
-    // Multiplication by ap is idempotent on the component but does affect sign
+    // Multiplication by ap is idempotent on the form but does affect sign
     match (i.is_point(), j.is_point()) {
-        (true, _) => return Alpha::new(sign, j_component).unwrap(),
-        (_, true) => return Alpha::new(sign, i_component).unwrap(),
+        (true, _) => return Alpha::new(sign, j_form).unwrap(),
+        (_, true) => return Alpha::new(sign, i_form).unwrap(),
         (false, false) => (),
     };
 
-    let (pop_sign, axes) = pop_and_cancel_repeated_axes(i_component, j_component);
+    let (pop_sign, axes) = pop_and_cancel_repeated_axes(i_form, j_form);
     sign = sign.combine(&pop_sign);
 
     // For ap and vectors we don't have an ordering to worry about
     match axes.len() {
-        0 => return Alpha::new(sign, Component::Point).unwrap(),
-        1 => return Alpha::new(sign, Component::Vector(axes[0])).unwrap(),
+        0 => return Alpha::new(sign, Form::Point).unwrap(),
+        1 => return Alpha::new(sign, Form::Vector(axes[0])).unwrap(),
         _ => (),
     };
 
     let (ordering_sign, target) = pop_to_correct_ordering(&axes);
     sign = sign.combine(&ordering_sign);
 
-    let comp = Component::try_from_axes(&target).unwrap();
+    let comp = Form::try_from_axes(&target).unwrap();
     return Alpha::new(sign, comp).unwrap();
 }
 
 /// Compute the full_product inverse of an Alpha element.
 /// This is defined such that x ^ inverse(x) == ap
 pub fn invert_alpha(a: &Alpha) -> Alpha {
-    Alpha::new(a.sign().combine(&ar_product(&a, &a).sign()), a.component()).unwrap()
+    Alpha::new(a.sign().combine(&ar_product(&a, &a).sign()), a.form()).unwrap()
 }
 
 // NOTE: This is where we are hard coding the +--- metric along with assuming
@@ -115,12 +115,9 @@ fn get_target_ordering(axes: &Vec<Axis>) -> Vec<Axis> {
 // This makes use of apply_metric above to determine sign changes when cancelling repeated
 // axes and starts from a positive sign. The return value of this function needs to be
 // combined with any accumulated sign changes to obtain the true sign.
-fn pop_and_cancel_repeated_axes(
-    i_component: Component,
-    j_component: Component,
-) -> (Sign, Vec<Axis>) {
-    let i_axes = i_component.as_vec();
-    let j_axes = j_component.as_vec();
+fn pop_and_cancel_repeated_axes(i_form: Form, j_form: Form) -> (Sign, Vec<Axis>) {
+    let i_axes = i_form.as_vec();
+    let j_axes = j_form.as_vec();
     let mut sign = Sign::Pos;
 
     let mut axes = i_axes.clone();
@@ -196,19 +193,19 @@ fn permuted_indices<T: Ord>(s1: &[T], s2: &[T]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algebra::{Alpha, Axis, Component, ALLOWED_ALPHA_COMPONENTS};
+    use crate::algebra::{Alpha, Axis, Form, ALLOWED_ALPHA_FORMS};
 
     #[test]
     fn target_ordering_is_always_correct_for_allowed() {
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let axes = c.as_vec();
             assert_eq!(get_target_ordering(&axes), axes);
         }
     }
 
     #[test]
-    fn maching_components_cancel_completely() {
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+    fn maching_forms_cancel_completely() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let (_, axes) = pop_and_cancel_repeated_axes(c.clone(), *c);
             assert_eq!(axes, vec![]);
         }
@@ -216,8 +213,8 @@ mod tests {
 
     #[test]
     fn cancelling_repreats_never_leaves_duplicate_axes() {
-        for c1 in ALLOWED_ALPHA_COMPONENTS.iter() {
-            for c2 in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c1 in ALLOWED_ALPHA_FORMS.iter() {
+            for c2 in ALLOWED_ALPHA_FORMS.iter() {
                 let (_, mut axes) = pop_and_cancel_repeated_axes(*c1, *c2);
                 axes.sort();
 
@@ -237,13 +234,13 @@ mod tests {
                     continue;
                 };
 
-                let a1 = Alpha::new(Sign::Pos, Component::Vector(*i)).unwrap();
-                let a2 = Alpha::new(Sign::Pos, Component::Vector(*j)).unwrap();
+                let a1 = Alpha::new(Sign::Pos, Form::Vector(*i)).unwrap();
+                let a2 = Alpha::new(Sign::Pos, Form::Vector(*j)).unwrap();
 
                 let res1 = ar_product(&a1, &a2);
                 let res2 = ar_product(&a2, &a1);
 
-                assert_eq!(res1.component(), res2.component());
+                assert_eq!(res1.form(), res2.form());
                 assert_ne!(res1.sign(), res2.sign());
             }
         }
@@ -251,9 +248,9 @@ mod tests {
 
     #[test]
     fn alphas_invert_through_ap() {
-        let ap = Alpha::new(Sign::Pos, Component::Point).unwrap();
+        let ap = Alpha::new(Sign::Pos, Form::Point).unwrap();
 
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let alpha = Alpha::new(Sign::Pos, *c).unwrap();
             let inv = invert_alpha(&alpha);
 

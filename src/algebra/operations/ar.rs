@@ -17,18 +17,30 @@ use crate::algebra::{Alpha, Term};
 /// let res_mvec: MultiVector = full(&a1, &a2);
 ///
 /// assert_eq!(res_alpha, -alpha!(1 2 3));
-/// assert_eq!(res_mvec, mvec![-term!("023.01", 1 2 3)]);
+/// assert_eq!(res_mvec, mvec![-term!(["023", "01"], 1 2 3)]);
 /// # }
 /// ```
 pub trait AR {
+    type Output: AR;
+
     fn as_terms(&self) -> Vec<Term>;
     fn from_terms(terms: Vec<Term>) -> Self;
+
+    fn as_alphas(&self) -> Vec<Alpha> {
+        self.as_terms().iter().map(|t| t.alpha()).collect()
+    }
+
+    fn from_alphas(alphas: Vec<Alpha>) -> Self::Output {
+        Self::Output::from_terms(alphas.iter().map(|a| Term::new(None, a.clone())).collect())
+    }
 }
 
 // Provide some simple default impls to avoid the need to wrap things in a full-fat AR
 // impl in order to be able to work with them.
 
 impl AR for Vec<Term> {
+    type Output = Self;
+
     fn as_terms(&self) -> Vec<Term> {
         self.clone()
     }
@@ -39,8 +51,10 @@ impl AR for Vec<Term> {
 }
 
 impl AR for Vec<Alpha> {
+    type Output = Self;
+
     fn as_terms(&self) -> Vec<Term> {
-        self.iter().map(|a| Term::from_alpha(a.clone())).collect()
+        self.iter().map(|a| Term::new(None, a.clone())).collect()
     }
 
     fn from_terms(terms: Vec<Term>) -> Self {

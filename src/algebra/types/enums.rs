@@ -78,7 +78,7 @@ impl fmt::Display for Axis {
 }
 
 #[derive(Hash, Eq, PartialEq, Ord, PartialOrd, Debug, Copy, Clone, Serialize, Deserialize)]
-pub enum Component {
+pub enum Form {
     Point,
     Vector(Axis),
     Bivector(Axis, Axis),
@@ -86,37 +86,37 @@ pub enum Component {
     Quadrivector(Axis, Axis, Axis, Axis),
 }
 
-impl fmt::Display for Component {
+impl fmt::Display for Form {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Component::Point => write!(f, "p"),
-            Component::Vector(i) => write!(f, "{}", i),
-            Component::Bivector(i, j) => write!(f, "{}{}", i, j),
-            Component::Trivector(i, j, k) => write!(f, "{}{}{}", i, j, k),
-            Component::Quadrivector(i, j, k, l) => write!(f, "{}{}{}{}", i, j, k, l),
+            Form::Point => write!(f, "p"),
+            Form::Vector(i) => write!(f, "{}", i),
+            Form::Bivector(i, j) => write!(f, "{}{}", i, j),
+            Form::Trivector(i, j, k) => write!(f, "{}{}{}", i, j, k),
+            Form::Quadrivector(i, j, k, l) => write!(f, "{}{}{}{}", i, j, k, l),
         }
     }
 }
 
-impl Component {
-    pub fn try_from_axes(ixs: &Vec<Axis>) -> Result<Component, String> {
+impl Form {
+    pub fn try_from_axes(ixs: &Vec<Axis>) -> Result<Form, String> {
         match ixs.len() {
-            0 => Ok(Component::Point),
-            1 => Ok(Component::Vector(ixs[0])),
-            2 => Ok(Component::Bivector(ixs[0], ixs[1])),
-            3 => Ok(Component::Trivector(ixs[0], ixs[1], ixs[2])),
-            4 => Ok(Component::Quadrivector(ixs[0], ixs[1], ixs[2], ixs[3])),
+            0 => Ok(Form::Point),
+            1 => Ok(Form::Vector(ixs[0])),
+            2 => Ok(Form::Bivector(ixs[0], ixs[1])),
+            3 => Ok(Form::Trivector(ixs[0], ixs[1], ixs[2])),
+            4 => Ok(Form::Quadrivector(ixs[0], ixs[1], ixs[2], ixs[3])),
             _ => Err(format!("Invalid component indices {:?}", ixs)),
         }
     }
 
     pub fn as_vec(&self) -> Vec<Axis> {
         match *self {
-            Component::Point => vec![],
-            Component::Vector(i) => vec![i],
-            Component::Bivector(i, j) => vec![i, j],
-            Component::Trivector(i, j, k) => vec![i, j, k],
-            Component::Quadrivector(i, j, k, l) => vec![i, j, k, l],
+            Form::Point => vec![],
+            Form::Vector(i) => vec![i],
+            Form::Bivector(i, j) => vec![i, j],
+            Form::Trivector(i, j, k) => vec![i, j, k],
+            Form::Quadrivector(i, j, k, l) => vec![i, j, k, l],
         }
     }
 }

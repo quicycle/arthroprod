@@ -1,15 +1,55 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Alpha, Magnitude, Xi, AR};
+use crate::algebra::{ar_product, invert_alpha, Alpha, Form, Magnitude, Sign, AR};
 
-#[derive(Debug, PartialOrd, PartialEq, Clone, Hash, Eq, Ord, Serialize, Deserialize)]
+#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
+enum XiValue {
+    Raw(String),
+    Xi(Box<Vec<Xi>>),
+}
+
+#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
+struct Xi {
+    value: XiValue,
+    inverted: bool,
+    partials: Vec<Form>,
+}
+
+impl Xi {
+    fn new(value: String) -> Xi {
+        Xi {
+            value: XiValue::Raw(value),
+            inverted: false,
+            partials: Vec::new(),
+        }
+    }
+
+    fn new_xi(value: String) -> Xi {
+        let xi = Xi::new(value);
+        Xi {
+            value: XiValue::Xi(Box::new(vec![xi])),
+            inverted: false,
+            partials: Vec::new(),
+        }
+    }
+}
+
+#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
 pub struct Term {
-    xi: Xi,
+    // positive definite scalar magnitude as a ratio
+    magnitude: Magnitude,
+    // The space-time form of the term (including directed sign)
     alpha: Alpha,
+    // Partial derivatives taken for the term
+    partials: Vec<Form>,
+    // Xi product elements accumulated for the term
+    xis: Vec<Xi>,
 }
 
 impl AR for Term {
+    type Output = Self;
+
     fn as_terms(&self) -> Vec<Term> {
         vec![self.clone()]
     }
@@ -24,26 +64,32 @@ impl AR for Term {
 }
 
 impl Term {
-    pub fn new(sym: String, alpha: Alpha) -> Term {
+    pub fn new(val: Option<String>, alpha: Alpha) -> Term {
+        let xi = if let Some(v) = val {
+            Xi::new(v)
+        } else {
+            Xi::new(format!("{}", alpha.form()))
+        };
+
         Term {
-            xi: Xi::new(sym),
+            magnitude: 1.into(),
             alpha: alpha,
+            partials: vec![],
+            xis: vec![xi],
         }
     }
 
-    pub fn new_with_xi(xi: Xi, alpha: Alpha) -> Term {
-        Term { xi, alpha }
-    }
-
-    pub fn from_alpha(alpha: Alpha) -> Term {
+    pub fn from_xis_and_alpha(xis: Vec<String>, alpha: Alpha) -> Term {
         Term {
-            xi: Xi::new(format!("{}", alpha.component())),
+            magnitude: 1.into(),
             alpha: alpha,
+            partials: vec![],
+            xis: xis.iter().map(|s| Xi::new_xi(s.clone())).collect(),
         }
     }
 
-    pub fn xi(&self) -> Xi {
-        self.xi.clone()
+    pub fn form(&self) -> Form {
+        self.alpha.form()
     }
 
     pub fn alpha(&self) -> Alpha {
@@ -51,31 +97,99 @@ impl Term {
     }
 
     pub fn magnitude(&self) -> Magnitude {
-        let (mag, _) = self.xi.clone().into();
+        self.magnitude
+    }
 
-        mag
+    pub fn inverted(&self) -> Term {
+        let mut t = self.clone();
+        t.xis = t
+            .xis
+            .iter()
+            .map(|t| {
+                let mut term = t.clone();
+                term.inverted = !term.inverted;
+                return term;
+            })
+            .collect();
+        t.alpha = invert_alpha(&t.alpha);
+        t.magnitude = 1 / t.magnitude;
+        return t;
+    }
+
+    pub fn set_alpha(&mut self, a: Alpha) {
+        self.alpha = a;
+    }
+
+    pub fn add_partial(&mut self, wrt: &Alpha) {
+        self.partials.push(wrt.form());
+        self.partials.sort();
+    }
+
+    pub fn set_partials(&mut self, partials: Vec<Form>) {
+        self.partials = partials;
+        self.partials.sort();
+    }
+
+    pub fn xi_str(&self) -> String {
+        dotted_xi_str(&self.xis)
+    }
+
+    pub fn try_add(&self, other: &Term) -> Option<Term> {
+        if self.summation_key() == other.summation_key() {
+            let mut t = self.clone();
+
+            if other.alpha.sign() == Sign::Neg {
+                // For subtraction we need to make sure that magnitude stays positive
+                // so we flip the sign of the alpha if needed and make use of the fact
+                // that A - B == -(B - A)
+                if t.magnitude > other.magnitude {
+                    t.magnitude -= other.magnitude;
+                } else {
+                    t.magnitude = other.magnitude - t.magnitude;
+                    t.alpha = -t.alpha;
+                }
+            } else {
+                // For addition we simply sum the magnitudes
+                t.magnitude += other.magnitude;
+            }
+
+            Some(t)
+        } else {
+            None
+        }
+    }
+
+    pub fn form_product_with(&self, other: &Term) -> Term {
+        Term {
+            magnitude: self.magnitude * other.magnitude,
+            alpha: ar_product(&self.alpha, &other.alpha),
+            partials: Vec::new(),
+            xis: vec![self.extract_xi(), other.extract_xi()],
+        }
+    }
+
+    fn extract_xi(&self) -> Xi {
+        Xi {
+            value: XiValue::Xi(Box::new(self.xis.clone())),
+            partials: self.partials.clone(),
+            inverted: false,
+        }
+    }
+
+    pub fn summation_key(&self) -> (Form, String) {
+        (self.form(), self.xi_str())
     }
 }
 
-impl fmt::Display for Term {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", self.alpha, self.xi)
-    }
-}
+// NOTE: Arithmetic operation impls
 
 impl ops::Mul<usize> for Term {
     type Output = Self;
 
     fn mul(self, rhs: usize) -> Self::Output {
-        Term::new_with_xi(self.xi * rhs, self.alpha)
-    }
-}
-
-impl ops::Mul<Term> for usize {
-    type Output = Term;
-
-    fn mul(self, rhs: Term) -> Self::Output {
-        rhs * self
+        let mut t = self.clone();
+        t.magnitude = t.magnitude * rhs;
+        return t;
     }
 }
 
@@ -83,11 +197,55 @@ impl ops::Mul<isize> for Term {
     type Output = Self;
 
     fn mul(self, rhs: isize) -> Self::Output {
+        let mut t = self.clone();
         if rhs < 0 {
-            Term::new_with_xi(self.xi * (-rhs) as usize, -self.alpha)
+            t.magnitude = t.magnitude * (-rhs) as usize;
+            t.alpha = -t.alpha;
         } else {
-            Term::new_with_xi(self.xi * rhs as usize, self.alpha)
+            t.magnitude = t.magnitude * rhs as usize;
         }
+
+        return t;
+    }
+}
+
+impl ops::Mul<Magnitude> for Term {
+    type Output = Self;
+
+    fn mul(self, rhs: Magnitude) -> Self::Output {
+        let mut t = self.clone();
+        t.magnitude = t.magnitude * rhs;
+        return t;
+    }
+}
+
+impl ops::Div<Magnitude> for Term {
+    type Output = Term;
+
+    fn div(self, rhs: Magnitude) -> Self::Output {
+        let mut t = self.clone();
+        t.magnitude = t.magnitude / rhs;
+        return t;
+    }
+}
+
+impl ops::Neg for Term {
+    type Output = Term;
+
+    fn neg(self) -> Self::Output {
+        let mut t = self.clone();
+        t.alpha = -t.alpha;
+        return t;
+    }
+}
+
+// NOTE: flipped variants for primary impls above
+
+impl ops::Mul<Term> for usize {
+    type Output = Term;
+
+    fn mul(self, rhs: Term) -> Self::Output {
+        rhs * self
     }
 }
 
@@ -99,14 +257,6 @@ impl ops::Mul<Term> for isize {
     }
 }
 
-impl ops::Mul<Magnitude> for Term {
-    type Output = Self;
-
-    fn mul(self, rhs: Magnitude) -> Self::Output {
-        Term::new_with_xi(self.xi * rhs, self.alpha)
-    }
-}
-
 impl ops::Mul<Term> for Magnitude {
     type Output = Term;
 
@@ -115,21 +265,43 @@ impl ops::Mul<Term> for Magnitude {
     }
 }
 
-impl ops::Div<Magnitude> for Term {
-    type Output = Term;
+// NOTE: fmt::Display impls and helper functions
 
-    fn div(self, rhs: Magnitude) -> Self::Output {
-        Term::new_with_xi(self.xi / rhs, self.alpha)
+fn partial_str(partials: &Vec<Form>) -> String {
+    partials
+        .iter()
+        .fold(String::new(), |acc, p| acc + &format!("∂{}", p))
+}
+
+fn dotted_xi_str(xis: &Vec<Xi>) -> String {
+    xis.iter()
+        .fold(String::new(), |acc, x| format!("{}.{}", acc, x))
+}
+
+impl fmt::Display for XiValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            XiValue::Raw(s) => write!(f, "{}", s),
+            XiValue::Xi(x) => write!(f, "{}", dotted_xi_str(x)),
+        }
     }
 }
 
-impl ops::Neg for Term {
-    type Output = Term;
+impl fmt::Display for Xi {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}", partial_str(&self.partials), self.value)
+    }
+}
 
-    fn neg(self) -> Self::Output {
-        Term {
-            xi: self.xi,
-            alpha: -self.alpha,
-        }
+impl fmt::Display for Term {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let m_str = if self.magnitude == 1 {
+            format!("({})", self.magnitude)
+        } else {
+            String::new()
+        };
+        let p_str = partial_str(&self.partials);
+
+        write!(f, "{}{}{}{}", self.alpha, m_str, p_str, self.xi_str())
     }
 }

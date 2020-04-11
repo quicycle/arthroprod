@@ -2,7 +2,7 @@
 //! for division to establish the divisor. In practice we are chosing between 1/A ^ B or A ^ 1/B.
 //! Our current thinking is that we need to define division as the former (dividing A into B).
 
-use crate::algebra::{ar_product, diamond, full, hermitian, invert_alpha, MultiVector, Term, AR};
+use crate::algebra::{diamond, full, hermitian, MultiVector, Term, AR};
 
 /// Divide left into right. When left and right are both terms or alphas, this is a relatively
 /// simple inversion of left and then forming the full product. For MultiVectors this requires
@@ -22,14 +22,7 @@ pub fn div<L: AR, R: AR, T: AR>(left: &L, right: &R) -> T {
 
 // dividing left into right (left \ right)
 fn div_single_terms(left: &Term, right: &Term) -> Vec<Term> {
-    let (wleft, sleft) = left.xi().into();
-    let (wright, sright) = right.xi().into();
-
-    let weight = wright / wleft; // dividing into not by
-    let symbol = format!("{}\\{}", sleft, sright);
-    let alpha = ar_product(&invert_alpha(&left.alpha()), &right.alpha());
-
-    vec![weight * Term::new(symbol, alpha)]
+    vec![left.form_product_with(&right.inverted())]
 }
 
 // dividing left into right (left \ right)
@@ -40,7 +33,7 @@ fn apply_van_der_mark<L: AR, R: AR>(left: &L, right: &R) -> Vec<Term> {
 
     // guaranteed to be a single ap term when computing phi ^ diamond(phi)
     let t: Term = full(&l_phi, &l_diamond_phi);
-    let (divisor, _) = t.as_terms()[0].xi().into();
+    let divisor = t.magnitude();
     let inverse: MultiVector = full(&l_dagger, &l_diamond_phi);
     let product: MultiVector = full(&inverse, right);
 

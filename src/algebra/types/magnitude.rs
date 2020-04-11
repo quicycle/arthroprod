@@ -147,6 +147,22 @@ impl ops::Add<Magnitude> for usize {
     }
 }
 
+impl ops::AddAssign for Magnitude {
+    fn add_assign(&mut self, other: Self) {
+        self.numerator =
+            (self.numerator * other.denominator) + (other.numerator * self.denominator);
+        self.denominator = self.denominator * other.denominator;
+    }
+}
+
+impl ops::SubAssign for Magnitude {
+    fn sub_assign(&mut self, other: Self) {
+        self.numerator =
+            (self.numerator * other.denominator) - (other.numerator * self.denominator);
+        self.denominator = self.denominator * other.denominator;
+    }
+}
+
 impl ops::Sub for Magnitude {
     type Output = Self;
 

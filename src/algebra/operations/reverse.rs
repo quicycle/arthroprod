@@ -20,7 +20,7 @@
 //! grade 0 -> 4, we can show that the number of pops required for reversing
 //! an Alpha of grade n is the (n-1)th triangular number.
 
-use crate::algebra::{Component, Term, AR};
+use crate::algebra::{Form, Term, AR};
 
 /// Reverse the order basis elements within an object and then resolve back into
 /// permitted Alpha values. In notation, this is denoted with an over tilde (~).
@@ -28,8 +28,8 @@ pub fn rev<T: AR, U: AR>(arg: &T) -> U {
     let mut terms: Vec<Term> = vec![];
 
     for term in arg.as_terms() {
-        match term.alpha().component() {
-            Component::Vector(_) | Component::Quadrivector(_, _, _, _) => terms.push(-term),
+        match term.alpha().form() {
+            Form::Vector(_) | Form::Quadrivector(_, _, _, _) => terms.push(-term),
             _ => terms.push(term),
         }
     }

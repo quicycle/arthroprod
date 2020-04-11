@@ -1,30 +1,30 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Axis, Component, Sign, Term, AR};
+use crate::algebra::{Axis, Form, Sign, Term, AR};
 
-/// When creating Alphas only the following components are valid
-pub const ALLOWED_ALPHA_COMPONENTS: [Component; 16] = [
+/// When creating Alphas only the following forms are valid
+pub const ALLOWED_ALPHA_FORMS: [Form; 16] = [
     // Zet B
-    Component::Point,
-    Component::Bivector(Axis::Y, Axis::Z),
-    Component::Bivector(Axis::Z, Axis::X),
-    Component::Bivector(Axis::X, Axis::Y),
+    Form::Point,
+    Form::Bivector(Axis::Y, Axis::Z),
+    Form::Bivector(Axis::Z, Axis::X),
+    Form::Bivector(Axis::X, Axis::Y),
     // Zet T
-    Component::Vector(Axis::T),
-    Component::Trivector(Axis::T, Axis::Y, Axis::Z),
-    Component::Trivector(Axis::T, Axis::Z, Axis::X),
-    Component::Trivector(Axis::T, Axis::X, Axis::Y),
+    Form::Vector(Axis::T),
+    Form::Trivector(Axis::T, Axis::Y, Axis::Z),
+    Form::Trivector(Axis::T, Axis::Z, Axis::X),
+    Form::Trivector(Axis::T, Axis::X, Axis::Y),
     // Zet A
-    Component::Trivector(Axis::X, Axis::Y, Axis::Z),
-    Component::Vector(Axis::X),
-    Component::Vector(Axis::Y),
-    Component::Vector(Axis::Z),
+    Form::Trivector(Axis::X, Axis::Y, Axis::Z),
+    Form::Vector(Axis::X),
+    Form::Vector(Axis::Y),
+    Form::Vector(Axis::Z),
     // Zet E
-    Component::Quadrivector(Axis::T, Axis::X, Axis::Y, Axis::Z),
-    Component::Bivector(Axis::T, Axis::X),
-    Component::Bivector(Axis::T, Axis::Y),
-    Component::Bivector(Axis::T, Axis::Z),
+    Form::Quadrivector(Axis::T, Axis::X, Axis::Y, Axis::Z),
+    Form::Bivector(Axis::T, Axis::X),
+    Form::Bivector(Axis::T, Axis::Y),
+    Form::Bivector(Axis::T, Axis::Z),
 ];
 
 /// An Alpha represents a pure element of the algebra without magnitude.
@@ -33,30 +33,30 @@ pub const ALLOWED_ALPHA_COMPONENTS: [Component; 16] = [
 #[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Serialize, Deserialize)]
 pub struct Alpha {
     sign: Sign,
-    comp: Component,
+    form: Form,
 }
 
 impl Alpha {
-    pub fn new(sign: Sign, comp: Component) -> Result<Alpha, String> {
-        if ALLOWED_ALPHA_COMPONENTS.iter().any(|&c| c == comp) {
-            Ok(Alpha { comp, sign })
+    pub fn new(sign: Sign, form: Form) -> Result<Alpha, String> {
+        if ALLOWED_ALPHA_FORMS.iter().any(|&f| f == form) {
+            Ok(Alpha { sign, form })
         } else {
-            Err(format!("Invalid Alpha index: {:?}", comp))
+            Err(format!("Invalid Alpha index: {:?}", form))
         }
     }
 
     pub fn try_from_axes(sign: Sign, axes: &Vec<Axis>) -> Result<Alpha, String> {
-        let comp = Component::try_from_axes(axes)?;
+        let form = Form::try_from_axes(axes)?;
 
-        Alpha::new(sign, comp)
+        Alpha::new(sign, form)
     }
 
     pub fn is_point(&self) -> bool {
-        self.comp == Component::Point
+        self.form == Form::Point
     }
 
-    pub fn component(&self) -> Component {
-        self.comp.clone()
+    pub fn form(&self) -> Form {
+        self.form.clone()
     }
 
     pub fn sign(&self) -> Sign {
@@ -65,8 +65,10 @@ impl Alpha {
 }
 
 impl AR for Alpha {
+    type Output = Self;
+
     fn as_terms(&self) -> Vec<Term> {
-        vec![Term::from_alpha(self.clone())]
+        vec![Term::new(None, self.clone())]
     }
 
     fn from_terms(terms: Vec<Term>) -> Self {
@@ -84,13 +86,13 @@ impl ops::Neg for Alpha {
     fn neg(self) -> Self::Output {
         Alpha {
             sign: -self.sign,
-            comp: self.comp,
+            form: self.form,
         }
     }
 }
 
 impl fmt::Display for Alpha {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}a{}", self.sign, self.comp)
+        write!(f, "{}a{}", self.sign, self.form)
     }
 }

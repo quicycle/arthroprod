@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Component, Magnitude, Sign, Term, Xi, ALLOWED_ALPHA_COMPONENTS, AR};
+use crate::algebra::{Form, Magnitude, Term, ALLOWED_ALPHA_FORMS, AR};
 
 /// A MultiVector is an unordered collection of a Terms representing a particular
 /// composite quantity within the Algebra. In its simplest form, a MultiVector is
@@ -18,6 +18,8 @@ pub struct MultiVector {
 }
 
 impl AR for MultiVector {
+    type Output = Self;
+
     fn as_terms(&self) -> Vec<Term> {
         self.terms.clone()
     }
@@ -34,48 +36,41 @@ impl MultiVector {
 
     pub fn add_term(&mut self, term: Term) {
         self.terms.push(term);
+        self.terms.sort();
     }
 
-    pub fn get(&self, c: &Component) -> Vec<Term> {
+    pub fn add_terms(&mut self, terms: Vec<Term>) {
+        self.terms.extend(terms);
+        self.terms.sort();
+    }
+
+    pub fn get(&self, c: &Form) -> Vec<Term> {
         self.terms
             .iter()
-            .filter(|t| &t.alpha().component() == c)
+            .filter(|t| &t.form() == c)
             .map(|t| t.clone())
             .collect()
     }
 
-    /// Combine together term weights with matching alphas and Xi symbols
+    /// Combine together term weights with matching Forms and Xis
     pub fn simplify(&mut self) {
-        let mut groups: HashMap<(Component, String), Vec<Term>> = HashMap::new();
+        let mut groups: HashMap<(Form, String), Vec<Term>> = HashMap::new();
 
         self.terms.iter().cloned().for_each(|t| {
-            let (_, sym) = t.xi().into();
-            let key = (t.alpha().component(), sym);
-
-            if let Some(group) = groups.get_mut(&key) {
-                group.push(t);
-            } else {
-                groups.insert(key, vec![t.clone()]);
-            };
+            groups.entry(t.summation_key()).or_insert(vec![]).push(t);
         });
 
+        // Now that we are grouped by summation_key we are safe to unwrap the
+        // try_combine call without blowing up
+        // TODO: cancelling terms with zero magnitude still needs some thought
+        // .filter(|t| t.magnitude() != 0)
         self.terms = groups
             .drain()
             .map(|(_, v)| {
-                v[1..v.len()].iter().fold(v[0].clone(), |acc, t| {
-                    let (w_acc, s) = acc.xi().into();
-                    let (w_t, _) = t.xi().into();
-                    match t.alpha().sign() {
-                        Sign::Pos => {
-                            Term::new_with_xi(Xi::new_weighted(w_acc + w_t, s), acc.alpha())
-                        }
-                        Sign::Neg => {
-                            Term::new_with_xi(Xi::new_weighted(w_acc - w_t, s), acc.alpha())
-                        }
-                    }
-                })
+                v[1..v.len()]
+                    .iter()
+                    .fold(v[0].clone(), |acc, t| acc.try_add(t).unwrap())
             })
-            .filter(|t| t.magnitude() != 0)
             .collect()
     }
 }
@@ -161,7 +156,7 @@ impl ops::Neg for MultiVector {
 
 impl fmt::Display for MultiVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = ALLOWED_ALPHA_COMPONENTS
+        let s = ALLOWED_ALPHA_FORMS
             .iter()
             .map(|c| {
                 let for_comp = self.get(c);
@@ -169,8 +164,8 @@ impl fmt::Display for MultiVector {
                     Some(format!("{}),", {
                         let mut vec_str = for_comp
                             .iter()
-                            .fold(String::from(format!("  a{}: (", c)), |s, val| {
-                                format!("{}{}, ", s, val.xi())
+                            .fold(String::from(format!("  a{}: (", c)), |acc, val| {
+                                format!("{}{}, ", acc, val.xi_str())
                             });
                         let desired_len = vec_str.len() - 2;
                         vec_str.split_off(desired_len);
