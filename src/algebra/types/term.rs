@@ -135,36 +135,44 @@ impl Term {
     }
 
     pub fn try_add(&self, other: &Term) -> Option<Term> {
-        if self.summation_key() == other.summation_key() {
-            let mut t = self.clone();
-
-            if other.alpha.sign() == Sign::Neg {
-                // For subtraction we need to make sure that magnitude stays positive
-                // so we flip the sign of the alpha if needed and make use of the fact
-                // that A - B == -(B - A)
-                if t.magnitude > other.magnitude {
-                    t.magnitude -= other.magnitude;
-                } else {
-                    t.magnitude = other.magnitude - t.magnitude;
-                    t.alpha = -t.alpha;
-                }
+        fn sub_mag(a: &Term, b: &Term) -> Term {
+            // For subtraction we need to make sure that magnitude stays positive
+            // so we flip the sign of the alpha if needed and make use of the fact
+            // that A - B == -(B - A)
+            let mut t = a.clone();
+            if t.magnitude > b.magnitude {
+                t.magnitude -= b.magnitude;
             } else {
-                // For addition we simply sum the magnitudes
-                t.magnitude += other.magnitude;
+                t.magnitude = b.magnitude - t.magnitude;
+                t.alpha = -t.alpha;
             }
+            return t;
+        }
 
-            Some(t)
+        if self.summation_key() == other.summation_key() {
+            Some(match (self.alpha.sign(), other.alpha.sign()) {
+                (Sign::Pos, Sign::Pos) | (Sign::Neg, Sign::Neg) => {
+                    let mut t = self.clone();
+                    t.magnitude += other.magnitude;
+                    t
+                }
+                (Sign::Pos, Sign::Neg) => sub_mag(self, other), // sub other from self
+                (Sign::Neg, Sign::Pos) => sub_mag(other, self), // sub self from other
+            })
         } else {
             None
         }
     }
 
     pub fn form_product_with(&self, other: &Term) -> Term {
+        let mut xis = vec![self.extract_xi(), other.extract_xi()];
+        xis.sort();
+
         Term {
             magnitude: self.magnitude * other.magnitude,
-            alpha: ar_product(&self.alpha, &other.alpha),
+            alpha: ar_product(&self.alpha.clone(), &other.alpha.clone()),
             partials: Vec::new(),
-            xis: vec![self.extract_xi(), other.extract_xi()],
+            xis: xis,
         }
     }
 

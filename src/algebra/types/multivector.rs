@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Form, Magnitude, Term, ALLOWED_ALPHA_FORMS, AR};
+use crate::algebra::{Form, Magnitude, Sign, Term, ALLOWED_ALPHA_FORMS, AR};
 
 /// A MultiVector is an unordered collection of a Terms representing a particular
 /// composite quantity within the Algebra. In its simplest form, a MultiVector is
@@ -45,11 +45,14 @@ impl MultiVector {
     }
 
     pub fn get(&self, c: &Form) -> Vec<Term> {
-        self.terms
+        let mut terms: Vec<Term> = self
+            .terms
             .iter()
             .filter(|t| &t.form() == c)
             .map(|t| t.clone())
-            .collect()
+            .collect();
+        terms.sort();
+        return terms;
     }
 
     /// Combine together term weights with matching Forms and Xis
@@ -63,14 +66,17 @@ impl MultiVector {
         // Now that we are grouped by summation_key we are safe to unwrap the
         // try_combine call without blowing up
         // TODO: cancelling terms with zero magnitude still needs some thought
-        // .filter(|t| t.magnitude() != 0)
+        //       John is pretty sure we need some additional checks before it is
+        //       safe to drop terms.
         self.terms = groups
             .drain()
-            .map(|(_, v)| {
-                v[1..v.len()]
+            .map(|(_, v)| match v.len() {
+                1 => v[0].clone(),
+                _ => v[1..v.len()]
                     .iter()
-                    .fold(v[0].clone(), |acc, t| acc.try_add(t).unwrap())
+                    .fold(v[0].clone(), |acc, t| acc.try_add(t).unwrap()),
             })
+            .filter(|t| t.magnitude() != 0)
             .collect()
     }
 }
@@ -162,11 +168,16 @@ impl fmt::Display for MultiVector {
                 let for_comp = self.get(c);
                 if for_comp.len() > 0 {
                     Some(format!("{}),", {
-                        let mut vec_str = for_comp
-                            .iter()
-                            .fold(String::from(format!("  a{}: (", c)), |acc, val| {
-                                format!("{}{}, ", acc, val.xi_str())
-                            });
+                        let mut vec_str = for_comp.iter().fold(
+                            String::from(format!("  a{}: (", c)),
+                            |acc, val| {
+                                let sign_str = match val.alpha().sign() {
+                                    Sign::Pos => "",
+                                    Sign::Neg => "-",
+                                };
+                                format!("{}{}{}, ", acc, sign_str, val.xi_str())
+                            },
+                        );
                         let desired_len = vec_str.len() - 2;
                         vec_str.split_off(desired_len);
                         vec_str
