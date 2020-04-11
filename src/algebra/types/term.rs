@@ -274,14 +274,18 @@ fn partial_str(partials: &Vec<Form>) -> String {
 }
 
 fn dotted_xi_str(xis: &Vec<Xi>) -> String {
-    xis.iter()
-        .fold(String::new(), |acc, x| format!("{}.{}", acc, x))
+    match xis.len() {
+        1 => format!("{}", xis[0]),
+        _ => xis[1..xis.len()]
+            .iter()
+            .fold(format!("{}", xis[0]), |acc, x| format!("{}.{}", acc, x)),
+    }
 }
 
 impl fmt::Display for XiValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            XiValue::Raw(s) => write!(f, "{}", s),
+            XiValue::Raw(s) => write!(f, "ξ{}", s),
             XiValue::Xi(x) => write!(f, "{}", dotted_xi_str(x)),
         }
     }
@@ -295,13 +299,13 @@ impl fmt::Display for Xi {
 
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let m_str = if self.magnitude == 1 {
+        let m_str = if self.magnitude != 1 {
             format!("({})", self.magnitude)
         } else {
             String::new()
         };
         let p_str = partial_str(&self.partials);
 
-        write!(f, "{}{}{}{}", self.alpha, m_str, p_str, self.xi_str())
+        write!(f, "{}{}{}({})", self.alpha, m_str, p_str, self.xi_str())
     }
 }
