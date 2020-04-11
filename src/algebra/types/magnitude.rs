@@ -70,7 +70,10 @@ fn gcd(n: usize, m: usize) -> usize {
 
 impl fmt::Display for Magnitude {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}/{}", self.numerator, self.denominator)
+        match self.denominator {
+            1 => write!(f, "{}", self.numerator),
+            _ => write!(f, "{}/{}", self.numerator, self.denominator),
+        }
     }
 }
 
