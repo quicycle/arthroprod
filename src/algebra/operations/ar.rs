@@ -17,7 +17,7 @@ use crate::algebra::{Alpha, Term};
 /// let res_mvec: MultiVector = full(&a1, &a2);
 ///
 /// assert_eq!(res_alpha, -alpha!(1 2 3));
-/// assert_eq!(res_mvec, mvec![-term!(["023", "01"], 1 2 3)]);
+/// assert_eq!(res_mvec, mvec![-term!(["01", "023"], 1 2 3)]);
 /// # }
 /// ```
 pub trait AR {

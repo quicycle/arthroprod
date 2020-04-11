@@ -48,10 +48,10 @@ pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
     let j_form = j.form();
 
     // Multiplication by ap is idempotent on the form but does affect sign
-    match (i.is_point(), j.is_point()) {
-        (true, _) => return Alpha::new(sign, j_form).unwrap(),
-        (_, true) => return Alpha::new(sign, i_form).unwrap(),
-        (false, false) => (),
+    match (i.form(), j.form()) {
+        (Form::Point, _) => return Alpha::new(sign, j_form).unwrap(),
+        (_, Form::Point) => return Alpha::new(sign, i_form).unwrap(),
+        _ => (),
     };
 
     let (pop_sign, axes) = pop_and_cancel_repeated_axes(i_form, j_form);

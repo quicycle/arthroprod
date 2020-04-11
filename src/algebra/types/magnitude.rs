@@ -20,6 +20,7 @@ pub struct Magnitude {
 }
 
 impl Magnitude {
+    /// Construct a new Magnitude ratio and cancel it to be in lowest terms
     pub fn new(numerator: usize, denominator: usize) -> Magnitude {
         let mut r = Magnitude::new_unchecked(numerator, denominator);
         r.reduce();

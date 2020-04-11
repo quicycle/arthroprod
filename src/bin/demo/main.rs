@@ -3,14 +3,14 @@ extern crate arthroprod;
 
 use arthroprod::algebra::{full, Alpha, Axis, Form, MultiVector, Sign, Term, AR};
 
-// negate all bivectors
+// negate everything but the bivectors
 fn double_dagger<T: AR>(m: &T) -> MultiVector {
     MultiVector::from_terms(
         m.as_terms()
             .iter()
             .map(|t| match t.alpha().form() {
-                Form::Bivector(_, _) => -t.clone(),
-                _ => t.clone(),
+                Form::Bivector(_, _) => t.clone(),
+                _ => -t.clone(),
             })
             .collect(),
     )

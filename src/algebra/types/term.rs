@@ -35,6 +35,8 @@ impl Xi {
     }
 }
 
+/// A Term represents a real scalar magnitude along with a paired [`Alpha`] giving the
+/// proper Space-Time [`Form`] in accordence with the principle of Absolute Relativity.
 #[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
 pub struct Term {
     // positive definite scalar magnitude as a ratio
@@ -64,6 +66,8 @@ impl AR for Term {
 }
 
 impl Term {
+    /// Construct a new Term. The underlying symbolic value will be constructed
+    /// from the Form of alpha if None is provided.
     pub fn new(val: Option<String>, alpha: Alpha) -> Term {
         let xi = if let Some(v) = val {
             Xi::new(v)
@@ -79,6 +83,7 @@ impl Term {
         }
     }
 
+    /// Construct a Term with compoud Xi values as opposed to raw symbols
     pub fn from_xis_and_alpha(xis: Vec<String>, alpha: Alpha) -> Term {
         Term {
             magnitude: 1.into(),
@@ -88,18 +93,23 @@ impl Term {
         }
     }
 
+    /// Extract a copy of the Space-Time [`Form`] of this term
     pub fn form(&self) -> Form {
         self.alpha.form()
     }
 
+    /// Extract a copy of the [`Alpha`] of this Term
     pub fn alpha(&self) -> Alpha {
         self.alpha.clone()
     }
 
+    /// Extract the unsigned [`Magnitude`] of this Term
     pub fn magnitude(&self) -> Magnitude {
         self.magnitude
     }
 
+    /// The multiplicative inverse of this Term through the full product
+    /// of the algebra.
     pub fn inverted(&self) -> Term {
         let mut t = self.clone();
         t.xis = t
@@ -116,24 +126,30 @@ impl Term {
         return t;
     }
 
+    /// Override the Alpha value of this Term
     pub fn set_alpha(&mut self, a: Alpha) {
         self.alpha = a;
     }
 
+    /// Add a single partial derivative and resort
     pub fn add_partial(&mut self, wrt: &Alpha) {
         self.partials.push(wrt.form());
         self.partials.sort();
     }
 
+    /// Replace the current set of partial derivatives
     pub fn set_partials(&mut self, partials: Vec<Form>) {
         self.partials = partials;
         self.partials.sort();
     }
 
+    /// Generate a string representation of the underlying Xi values for this term
     pub fn xi_str(&self) -> String {
         dotted_xi_str(&self.xis)
     }
 
+    /// Attempt to add two Terms. This will only succeed if their summation_key
+    /// of both Terms is the same
     pub fn try_add(&self, other: &Term) -> Option<Term> {
         fn sub_mag(a: &Term, b: &Term) -> Term {
             // For subtraction we need to make sure that magnitude stays positive
@@ -164,6 +180,7 @@ impl Term {
         }
     }
 
+    /// Form the product of this term and another under the full product of the algebra
     pub fn form_product_with(&self, other: &Term) -> Term {
         let mut xis = vec![self.extract_xi(), other.extract_xi()];
         xis.sort();
@@ -176,16 +193,17 @@ impl Term {
         }
     }
 
+    /// The elements of a Term that need to match for us to be able to sum them
+    pub fn summation_key(&self) -> (Form, String) {
+        (self.form(), self.xi_str())
+    }
+
     fn extract_xi(&self) -> Xi {
         Xi {
             value: XiValue::Xi(Box::new(self.xis.clone())),
             partials: self.partials.clone(),
             inverted: false,
         }
-    }
-
-    pub fn summation_key(&self) -> (Form, String) {
-        (self.form(), self.xi_str())
     }
 }
 
@@ -301,7 +319,8 @@ impl fmt::Display for XiValue {
 
 impl fmt::Display for Xi {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}{}", partial_str(&self.partials), self.value)
+        let inv = if self.inverted { "^-1" } else { "" };
+        write!(f, "{}{}{}", partial_str(&self.partials), self.value, inv)
     }
 }
 

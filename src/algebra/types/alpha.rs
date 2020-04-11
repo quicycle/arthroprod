@@ -29,7 +29,7 @@ pub const ALLOWED_ALPHA_FORMS: [Form; 16] = [
 
 /// An Alpha represents a pure element of the algebra without magnitude.
 /// It is composed of 0-4 Dimensions with the number of dimensions determining
-/// its nature: i.e. scalar, vector, bivector, trivector, quadrivector
+/// its form: i.e. scalar, vector, bivector, trivector, quadrivector
 #[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Copy, Clone, Serialize, Deserialize)]
 pub struct Alpha {
     sign: Sign,
@@ -37,6 +37,8 @@ pub struct Alpha {
 }
 
 impl Alpha {
+    /// Construct a new Alpha value from scratch. Errors if the Form given is
+    /// not found in [`ALLOWED_ALPHA_FORMS`].
     pub fn new(sign: Sign, form: Form) -> Result<Alpha, String> {
         if ALLOWED_ALPHA_FORMS.iter().any(|&f| f == form) {
             Ok(Alpha { sign, form })
@@ -45,20 +47,21 @@ impl Alpha {
         }
     }
 
+    /// Allow or construction of Alpha values from a dynamically created vector of
+    /// [`Axis`] values. Errors if the given vector does not map to one of the allowed
+    /// forms given in [`ALLOWED_ALPHA_FORMS`].
     pub fn try_from_axes(sign: Sign, axes: &Vec<Axis>) -> Result<Alpha, String> {
         let form = Form::try_from_axes(axes)?;
 
         Alpha::new(sign, form)
     }
 
-    pub fn is_point(&self) -> bool {
-        self.form == Form::Point
-    }
-
+    /// Take a copy of this Alphas [`Form`]
     pub fn form(&self) -> Form {
         self.form.clone()
     }
 
+    /// Take a copy of this Alphas [`Sign`]
     pub fn sign(&self) -> Sign {
         self.sign.clone()
     }

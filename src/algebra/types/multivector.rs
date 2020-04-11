@@ -4,12 +4,12 @@ use std::ops;
 
 use crate::algebra::{Form, Magnitude, Sign, Term, ALLOWED_ALPHA_FORMS, AR};
 
-/// A MultiVector is an unordered collection of a Terms representing a particular
+/// A MultiVector is an ordered collection of a Terms representing a particular
 /// composite quantity within the Algebra. In its simplest form, a MultiVector is
 /// a simple linear sum of Alphas, though it is possible for there to be significantly
 /// more structure.
 ///
-/// In practice, almost all arpy computations are done using MultiVectors as their
+/// In practice, almost all  computations are done using MultiVectors as their
 /// primary data structure so there are a number of methods designed for aiding in
 /// simplifying such computations.
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
@@ -25,37 +25,44 @@ impl AR for MultiVector {
     }
 
     fn from_terms(terms: Vec<Term>) -> Self {
-        MultiVector { terms }
+        let mut m = MultiVector { terms };
+        m.terms.sort();
+        return m;
     }
 }
 
 impl MultiVector {
+    /// Construct a new, empty MultiVector
     pub fn new() -> MultiVector {
         MultiVector { terms: vec![] }
     }
 
-    pub fn add_term(&mut self, term: Term) {
+    /// Push a new term into this MultiVector and reorder the terms if needed.
+    pub fn push(&mut self, term: Term) {
         self.terms.push(term);
         self.terms.sort();
     }
 
-    pub fn add_terms(&mut self, terms: Vec<Term>) {
-        self.terms.extend(terms);
+    /// Extend this MultiVector by converting other to a Vector of [`Term`]s
+    /// and then reorder if needed.
+    pub fn extend<T: AR>(&mut self, other: T) {
+        self.terms.extend(other.as_terms());
         self.terms.sort();
     }
 
-    pub fn get(&self, c: &Form) -> Vec<Term> {
-        let mut terms: Vec<Term> = self
+    /// Extract a copy of the terms in this MultiVector that have the supplied [`Form`]
+    pub fn get(&self, c: &Form) -> Option<Vec<Term>> {
+        let terms: Vec<Term> = self
             .terms
             .iter()
             .filter(|t| &t.form() == c)
             .map(|t| t.clone())
             .collect();
-        terms.sort();
-        return terms;
+
+        return if terms.len() > 0 { Some(terms) } else { None };
     }
 
-    /// Combine together term weights with matching Forms and Xis
+    /// Combine together term weights where they have matching Form and Xi
     pub fn simplify(&mut self) {
         let mut groups: HashMap<(Form, String), Vec<Term>> = HashMap::new();
 
@@ -165,9 +172,8 @@ impl fmt::Display for MultiVector {
         let s = ALLOWED_ALPHA_FORMS
             .iter()
             .map(|c| {
-                let for_comp = self.get(c);
-                if for_comp.len() > 0 {
-                    Some(format!("{}),", {
+                self.get(c).map(|for_comp| {
+                    format!("{}),", {
                         let mut vec_str = for_comp.iter().fold(
                             String::from(format!("  a{}: (", c)),
                             |acc, val| {
@@ -181,10 +187,8 @@ impl fmt::Display for MultiVector {
                         let desired_len = vec_str.len() - 2;
                         vec_str.split_off(desired_len);
                         vec_str
-                    }))
-                } else {
-                    None
-                }
+                    })
+                })
             })
             .filter_map(|s| s)
             .fold(String::from(""), |s, line| format!("{}\n{}", s, line));

@@ -120,8 +120,8 @@ macro_rules! term(
 ///
 /// let m1 = mvec![alpha!(1), -term!(0 3)];
 /// let mut m2 = MultiVector::new();
-/// m2.add_term(Term::new(None, alpha!(1)));
-/// m2.add_term(-term!(0 3));
+/// m2.push(Term::new(None, alpha!(1)));
+/// m2.push(-term!(0 3));
 ///
 /// assert_eq!(m1, m2);
 /// # }
