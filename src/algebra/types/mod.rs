@@ -10,5 +10,11 @@ mod enums;
 mod magnitude;
 mod multivector;
 mod term;
+mod xi;
 
-pub use self::{alpha::*, enums::*, magnitude::*, multivector::*, term::*};
+pub use self::alpha::{Alpha, ALLOWED_ALPHA_FORMS};
+pub use self::enums::{Axis, Form, Sign};
+pub use self::magnitude::Magnitude;
+pub use self::multivector::MultiVector;
+pub use self::term::Term;
+pub use self::xi::Xi;

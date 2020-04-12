@@ -26,11 +26,12 @@
 macro_rules! alpha(
     ($($num:expr) *) => {
         {
-            let sign = Sign::Pos;
+            let sign = $crate::algebra::Sign::Pos;
+            #[allow(unused_mut)]
             let mut axes = Vec::new();
-            $(axes.push(Axis::try_from_u8($num).unwrap());)*
+            $(axes.push($crate::algebra::Axis::try_from_u8($num).unwrap());)*
 
-            Alpha::try_from_axes(sign, &axes).unwrap()
+            $crate::algebra::Alpha::try_from_axes(sign, &axes).unwrap()
         }
     };
 );
@@ -61,45 +62,47 @@ macro_rules! alpha(
 /// let a3 = Alpha::new(Sign::Pos, Form::Vector(Axis::Y)).unwrap();
 ///
 /// assert_eq!(t1, Term::new(None, a1));
-/// assert_eq!(t2, Term::new(Some("symbolic".to_string()), a2));
-/// assert_eq!(t3, Term::from_xis_and_alpha(vec!["X".to_string(), "Y".to_string()], a3));
+/// assert_eq!(t2, Term::new(Some("symbolic"), a2));
+/// assert_eq!(t3, Term::from_xis_and_alpha(vec!["X", "Y"], a3));
 /// # }
 /// ```
 #[macro_export]
 macro_rules! term(
     ($($num:expr) *) => {
         {
-            let sign = Sign::Pos;
+            let sign = $crate::algebra::Sign::Pos;
+            #[allow(unused_mut)]
             let mut axes = Vec::new();
-            $(axes.push(Axis::try_from_u8($num).unwrap());)*
-            let alpha = Alpha::try_from_axes(sign, &axes).unwrap();
+            $(axes.push($crate::algebra::Axis::try_from_u8($num).unwrap());)*
+            let alpha = $crate::algebra::Alpha::try_from_axes(sign, &axes).unwrap();
 
-            Term::new(None, alpha)
+            $crate::algebra::Term::new(None, alpha)
         }
     };
 
     ([$($xi:expr),+], $($num:expr) *) => {
         {
-            let sign = Sign::Pos;
+            let sign = $crate::algebra::Sign::Pos;
+            #[allow(unused_mut)]
             let mut axes = Vec::new();
             let mut xis = vec![];
-            $(xis.push(String::from($xi));)+
-            $(axes.push(Axis::try_from_u8($num).unwrap());)*
-            let alpha = Alpha::try_from_axes(sign, &axes).unwrap();
+            $(xis.push($xi);)+
+            $(axes.push($crate::algebra::Axis::try_from_u8($num).unwrap());)*
+            let alpha = $crate::algebra::Alpha::try_from_axes(sign, &axes).unwrap();
 
-            Term::from_xis_and_alpha(xis, alpha)
+            $crate::algebra::Term::from_xis_and_alpha(xis, alpha)
         }
     };
 
     ($sym:tt, $($num:expr) +) => {
         {
-            let sign = Sign::Pos;
+            let sign = $crate::algebra::Sign::Pos;
+            #[allow(unused_mut)]
             let mut axes = Vec::new();
-            let symbol = String::from($sym);
-            $(axes.push(Axis::try_from_u8($num).unwrap());)+
-            let alpha = Alpha::try_from_axes(sign, &axes).unwrap();
+            $(axes.push($crate::algebra::Axis::try_from_u8($num).unwrap());)+
+            let alpha = $crate::algebra::Alpha::try_from_axes(sign, &axes).unwrap();
 
-            Term::new(Some(symbol), alpha)
+            $crate::algebra::Term::new(Some($sym), alpha)
         }
     };
 );
@@ -133,7 +136,7 @@ macro_rules! mvec(
             let mut terms = Vec::new();
             $(terms.extend($ar_elem.as_terms());)+
 
-            MultiVector::from_terms(terms)
+            $crate::algebra::MultiVector::from_terms(terms)
         }
     };
 );

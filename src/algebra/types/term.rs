@@ -1,52 +1,18 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{ar_product, invert_alpha, Alpha, Form, Magnitude, Sign, AR};
-
-#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
-enum XiValue {
-    Raw(String),
-    Xi(Box<Vec<Xi>>),
-}
-
-#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
-struct Xi {
-    value: XiValue,
-    inverted: bool,
-    partials: Vec<Form>,
-}
-
-impl Xi {
-    fn new(value: String) -> Xi {
-        Xi {
-            value: XiValue::Raw(value),
-            inverted: false,
-            partials: Vec::new(),
-        }
-    }
-
-    fn new_xi(value: String) -> Xi {
-        let xi = Xi::new(value);
-        Xi {
-            value: XiValue::Xi(Box::new(vec![xi])),
-            inverted: false,
-            partials: Vec::new(),
-        }
-    }
-}
+use super::xi::partial_str;
+use crate::algebra::{ar_product, invert_alpha, Alpha, Form, Magnitude, Sign, Xi, AR};
 
 /// A Term represents a real scalar magnitude along with a paired [`Alpha`] giving the
 /// proper Space-Time [`Form`] in accordence with the principle of Absolute Relativity.
 #[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
 pub struct Term {
-    // positive definite scalar magnitude as a ratio
     magnitude: Magnitude,
-    // The space-time form of the term (including directed sign)
     alpha: Alpha,
-    // Partial derivatives taken for the term
     partials: Vec<Form>,
-    // Xi product elements accumulated for the term
-    xis: Vec<Xi>,
+    numerator: Xi,
+    denominator: Xi,
 }
 
 impl AR for Term {
@@ -68,28 +34,30 @@ impl AR for Term {
 impl Term {
     /// Construct a new Term. The underlying symbolic value will be constructed
     /// from the Form of alpha if None is provided.
-    pub fn new(val: Option<String>, alpha: Alpha) -> Term {
+    pub fn new(val: Option<&str>, alpha: Alpha) -> Term {
         let xi = if let Some(v) = val {
             Xi::new(v)
         } else {
-            Xi::new(format!("{}", alpha.form()))
+            Xi::new(&format!("{}", alpha.form()))
         };
 
         Term {
             magnitude: 1.into(),
             alpha: alpha,
             partials: vec![],
-            xis: vec![xi],
+            numerator: xi,
+            denominator: Xi::empty(),
         }
     }
 
     /// Construct a Term with compoud Xi values as opposed to raw symbols
-    pub fn from_xis_and_alpha(xis: Vec<String>, alpha: Alpha) -> Term {
+    pub fn from_xis_and_alpha(xis: Vec<&str>, alpha: Alpha) -> Term {
         Term {
             magnitude: 1.into(),
             alpha: alpha,
             partials: vec![],
-            xis: xis.iter().map(|s| Xi::new_xi(s.clone())).collect(),
+            numerator: Xi::merge(&xis.iter().map(|s| Xi::new(s)).collect()),
+            denominator: Xi::empty(),
         }
     }
 
@@ -111,19 +79,13 @@ impl Term {
     /// The multiplicative inverse of this Term through the full product
     /// of the algebra.
     pub fn inverted(&self) -> Term {
-        let mut t = self.clone();
-        t.xis = t
-            .xis
-            .iter()
-            .map(|t| {
-                let mut term = t.clone();
-                term.inverted = !term.inverted;
-                return term;
-            })
-            .collect();
-        t.alpha = invert_alpha(&t.alpha);
-        t.magnitude = 1 / t.magnitude;
-        return t;
+        Term {
+            magnitude: 1 / self.magnitude,
+            alpha: invert_alpha(&self.alpha),
+            partials: self.partials.clone(),
+            numerator: self.denominator.clone(),
+            denominator: self.numerator.clone(),
+        }
     }
 
     /// Override the Alpha value of this Term
@@ -145,11 +107,22 @@ impl Term {
 
     /// Generate a string representation of the underlying Xi values for this term
     pub fn xi_str(&self) -> String {
-        dotted_xi_str(&self.xis)
+        let numerator = if self.numerator.is_empty() {
+            "1".to_string()
+        } else {
+            self.numerator.dotted_string()
+        };
+
+        if self.denominator.is_empty() {
+            format!("{}", numerator)
+        } else {
+            format!("{}/{}", numerator, self.denominator.dotted_string())
+        }
     }
 
     /// Attempt to add two Terms. This will only succeed if their summation_key
-    /// of both Terms is the same
+    /// of both Terms is the same. We use this as a method rather than implimenting
+    /// ops::Add for Terms as we are not guaranteed to be able to return a result.
     pub fn try_add(&self, other: &Term) -> Option<Term> {
         fn sub_mag(a: &Term, b: &Term) -> Term {
             // For subtraction we need to make sure that magnitude stays positive
@@ -182,28 +155,18 @@ impl Term {
 
     /// Form the product of this term and another under the full product of the algebra
     pub fn form_product_with(&self, other: &Term) -> Term {
-        let mut xis = vec![self.extract_xi(), other.extract_xi()];
-        xis.sort();
-
         Term {
             magnitude: self.magnitude * other.magnitude,
-            alpha: ar_product(&self.alpha.clone(), &other.alpha.clone()),
+            alpha: ar_product(&self.alpha, &other.alpha),
             partials: Vec::new(),
-            xis: xis,
+            numerator: Xi::merge(&vec![self.numerator.clone(), other.numerator.clone()]),
+            denominator: Xi::merge(&vec![self.denominator.clone(), other.denominator.clone()]),
         }
     }
 
     /// The elements of a Term that need to match for us to be able to sum them
     pub fn summation_key(&self) -> (Form, String) {
         (self.form(), self.xi_str())
-    }
-
-    fn extract_xi(&self) -> Xi {
-        Xi {
-            value: XiValue::Xi(Box::new(self.xis.clone())),
-            partials: self.partials.clone(),
-            inverted: false,
-        }
     }
 }
 
@@ -291,39 +254,6 @@ impl ops::Mul<Term> for Magnitude {
     }
 }
 
-// NOTE: fmt::Display impls and helper functions
-
-fn partial_str(partials: &Vec<Form>) -> String {
-    partials
-        .iter()
-        .fold(String::new(), |acc, p| acc + &format!("∂{}", p))
-}
-
-fn dotted_xi_str(xis: &Vec<Xi>) -> String {
-    match xis.len() {
-        1 => format!("{}", xis[0]),
-        _ => xis[1..xis.len()]
-            .iter()
-            .fold(format!("{}", xis[0]), |acc, x| format!("{}.{}", acc, x)),
-    }
-}
-
-impl fmt::Display for XiValue {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            XiValue::Raw(s) => write!(f, "ξ{}", s),
-            XiValue::Xi(x) => write!(f, "{}", dotted_xi_str(x)),
-        }
-    }
-}
-
-impl fmt::Display for Xi {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let inv = if self.inverted { "^-1" } else { "" };
-        write!(f, "{}{}{}", partial_str(&self.partials), self.value, inv)
-    }
-}
-
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let m_str = if self.magnitude != 1 {
@@ -335,4 +265,58 @@ impl fmt::Display for Term {
 
         write!(f, "{}{}{}({})", self.alpha, m_str, p_str, self.xi_str())
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case(Term::new(None, alpha!(0 1)), Term::new(None, alpha!(0 1)))]
+    #[test_case(Term::new(None, alpha!(2 3)), Term::new(None, -alpha!(2 3)))]
+    #[test_case(term!(0 3 1), -term!(0 3 1))]
+    #[test_case(term!("foo", 1 2 3), term!("foo", 1 2 3))]
+    #[test_case(term!(["foo", "bar"], 0 1 2 3), -term!(["foo", "bar"], 0 1 2 3))]
+    fn inversion_works(t: Term, u: Term) {
+        let mut expected = u.clone();
+        expected.numerator = u.denominator;
+        expected.denominator = u.numerator;
+        assert_eq!(t.inverted(), expected);
+    }
+
+    // TODO: This currently "works". Should it?
+    // #[test_case(term!("foo", 0 2), term!(["foo"], 0 2), false)]
+    #[test_case(term!("foo", 1 2 3), term!("foo", 1 2 3), true)]
+    #[test_case(term!("foo", 1), -term!("foo", 1), true)]
+    #[test_case(term!("foo", 1), term!("foo", 2), false)]
+    #[test_case(term!("foo", 0 2), term!("bar", 0 2), false)]
+    fn summation_key_correctly_identifies_terms(t: Term, u: Term, expected: bool) {
+        assert_eq!(t.summation_key() == u.summation_key(), expected);
+    }
+
+    #[test_case(term!(1 2 3), term!(1 2 3), 2 as usize * term!(1 2 3))]
+    #[test_case(term!(3 1), 2 as usize * -term!(3 1), -1 as isize * term!(3 1))]
+    fn try_add_correctly_sums_terms(t: Term, u: Term, expected: Term) {
+        assert_eq!(t.try_add(&u).unwrap(), expected);
+    }
+
+    #[test_case(term!("a", 2 3), term!("b", 1 2 3), -term!(["a", "b"], 1))]
+    #[test_case(term!("a", 2 3), term!("a", 2 3), -term!(["a", "a"], ))]
+    fn form_product_with_works_with_no_inversion(left: Term, right: Term, expected: Term) {
+        assert_eq!(left.form_product_with(&right), expected)
+    }
+
+    // #[test]
+    // fn form_product_with_works_inversion() {
+    //     let left = term!("a", 2 3);
+    //     let right = term!("b", 0 2).inverted();
+    //     let mut expected = term!(["a", "b"], 0 3);
+    //     if let XiValue::Xi(mut xis) = &expected.xis[1].value {
+    //         xis[0].inverted = true;
+    //     }
+
+    //     assert_eq!(left.form_product_with(&right), expected)
+    // }
 }

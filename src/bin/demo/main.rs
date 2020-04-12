@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate arthroprod;
 
-use arthroprod::algebra::{full, Alpha, Axis, Form, MultiVector, Sign, Term, AR};
+use arthroprod::algebra::{full, Alpha, Form, MultiVector, AR};
 
 // negate everything but the bivectors
 fn double_dagger<T: AR>(m: &T) -> MultiVector {
