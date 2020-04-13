@@ -2,7 +2,7 @@ use std::fmt;
 use std::ops;
 
 use super::xi::partial_str;
-use crate::algebra::{ar_product, invert_alpha, Alpha, Form, Magnitude, Sign, Xi, AR};
+use crate::algebra::{ar_product, Alpha, Form, Magnitude, Sign, Xi, AR};
 
 /// A Term represents a real scalar magnitude along with a paired [`Alpha`] giving the
 /// proper Space-Time [`Form`] in accordence with the principle of Absolute Relativity.
@@ -28,6 +28,16 @@ impl AR for Term {
         };
 
         terms[0].clone()
+    }
+
+    fn inverse(&self) -> Self::Output {
+        Term {
+            magnitude: 1 / self.magnitude,
+            alpha: self.alpha.inverse(),
+            partials: self.partials.clone(),
+            numerator: self.denominator.clone(),
+            denominator: self.numerator.clone(),
+        }
     }
 }
 
@@ -74,18 +84,6 @@ impl Term {
     /// Extract the unsigned [`Magnitude`] of this Term
     pub fn magnitude(&self) -> Magnitude {
         self.magnitude
-    }
-
-    /// The multiplicative inverse of this Term through the full product
-    /// of the algebra.
-    pub fn inverted(&self) -> Term {
-        Term {
-            magnitude: 1 / self.magnitude,
-            alpha: invert_alpha(&self.alpha),
-            partials: self.partials.clone(),
-            numerator: self.denominator.clone(),
-            denominator: self.numerator.clone(),
-        }
     }
 
     /// Override the Alpha value of this Term
@@ -283,7 +281,7 @@ mod tests {
         let mut expected = u.clone();
         expected.numerator = u.denominator;
         expected.denominator = u.numerator;
-        assert_eq!(t.inverted(), expected);
+        assert_eq!(t.inverse(), expected);
     }
 
     // TODO: This currently "works". Should it?

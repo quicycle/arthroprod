@@ -1,4 +1,4 @@
-use crate::algebra::{ar_product, invert_alpha, Alpha, MultiVector, Term, AR};
+use crate::algebra::{ar_product, Alpha, MultiVector, Term, AR};
 
 #[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Serialize, Deserialize)]
 pub struct ArDifferential {
@@ -10,7 +10,7 @@ pub struct ArDifferential {
 impl ArDifferential {
     pub fn new(wrt: &[Alpha]) -> ArDifferential {
         ArDifferential {
-            wrt: wrt.iter().map(|w| invert_alpha(w)).collect(),
+            wrt: wrt.iter().map(|w| w.inverse()).collect(),
         }
     }
 

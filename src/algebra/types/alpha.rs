@@ -1,7 +1,7 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Axis, Form, Sign, Term, AR};
+use crate::algebra::{ar_product, Axis, Form, Sign, Term, AR};
 
 /// When creating Alphas only the following forms are valid
 pub const ALLOWED_ALPHA_FORMS: [Form; 16] = [
@@ -80,6 +80,10 @@ impl AR for Alpha {
         };
 
         terms[0].alpha()
+    }
+
+    fn inverse(&self) -> Self::Output {
+        Alpha::new(self.sign.combine(&ar_product(&self, &self).sign), self.form).unwrap()
     }
 }
 

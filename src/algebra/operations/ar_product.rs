@@ -71,12 +71,6 @@ pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
     return Alpha::new(sign, comp).unwrap();
 }
 
-/// Compute the full_product inverse of an Alpha element.
-/// This is defined such that x ^ inverse(x) == ap
-pub fn invert_alpha(a: &Alpha) -> Alpha {
-    Alpha::new(a.sign().combine(&ar_product(&a, &a).sign()), a.form()).unwrap()
-}
-
 // NOTE: This is where we are hard coding the +--- metric along with assuming
 //       that we are using conventional sign rules for combining +/-
 fn apply_metric(s: Sign, a: &Axis) -> Sign {
@@ -193,7 +187,7 @@ fn permuted_indices<T: Ord>(s1: &[T], s2: &[T]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algebra::{Alpha, Axis, Form, ALLOWED_ALPHA_FORMS};
+    use crate::algebra::{Alpha, Axis, Form, ALLOWED_ALPHA_FORMS, AR};
 
     #[test]
     fn target_ordering_is_always_correct_for_allowed() {
@@ -252,9 +246,8 @@ mod tests {
 
         for c in ALLOWED_ALPHA_FORMS.iter() {
             let alpha = Alpha::new(Sign::Pos, *c).unwrap();
-            let inv = invert_alpha(&alpha);
 
-            assert_eq!(ar_product(&alpha, &inv), ap);
+            assert_eq!(ar_product(&alpha, &alpha.inverse()), ap);
         }
     }
 }
