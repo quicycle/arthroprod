@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 use std::ops;
 
@@ -70,6 +71,7 @@ impl Xi {
     /// Represent this Xi as a dotted string of terms
     pub fn dotted_string(&self) -> String {
         let partials = partial_str(&self.partials);
+
         let with_partials = |s: String| -> String {
             match partials.len() {
                 0 => s,
@@ -77,19 +79,35 @@ impl Xi {
             }
         };
 
+        let power_notation = |children: &Vec<Xi>| -> String {
+            let exp_str = |(xi, count): (Xi, usize)| -> String {
+                if count == 1 {
+                    xi.dotted_string()
+                } else {
+                    format!("{}^{}", xi.dotted_string(), count)
+                }
+            };
+
+            let mut groups: HashMap<Xi, Vec<Xi>> = HashMap::new();
+            children.iter().cloned().for_each(|c| {
+                groups.entry(c.clone()).or_insert(vec![]).push(c);
+            });
+
+            let mut powers: Vec<(Xi, usize)> = groups.drain().map(|(k, v)| (k, v.len())).collect();
+            powers.sort_by(|a, b| a.0.cmp(&b.0));
+            powers[1..powers.len()]
+                .iter()
+                .fold(exp_str(powers[0].clone()), |acc, pair| {
+                    format!("{}.{}", acc, exp_str(pair.clone()))
+                })
+        };
+
         match self.value.clone() {
             Some(val) => format!("{}ξ{}", partials, val),
             None => match self.children.len() {
                 0 => panic!("Empty Xi"),
                 1 => with_partials(self.children[0].dotted_string()),
-                _ => {
-                    let s = self.children[1..self.children.len()]
-                        .iter()
-                        .fold(format!("{}", self.children[0].dotted_string()), |acc, x| {
-                            format!("{}.{}", acc, x.dotted_string())
-                        });
-                    with_partials(s)
-                }
+                _ => with_partials(power_notation(&self.children)),
             },
         }
     }
