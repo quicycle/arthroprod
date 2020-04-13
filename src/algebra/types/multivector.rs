@@ -75,7 +75,7 @@ impl MultiVector {
         // TODO: cancelling terms with zero magnitude still needs some thought
         //       John is pretty sure we need some additional checks before it is
         //       safe to drop terms.
-        self.terms = groups
+        let mut terms: Vec<Term> = groups
             .drain()
             .map(|(_, v)| match v.len() {
                 1 => v[0].clone(),
@@ -84,7 +84,10 @@ impl MultiVector {
                     .fold(v[0].clone(), |acc, t| acc.try_add(t).unwrap()),
             })
             .filter(|t| t.magnitude() != 0)
-            .collect()
+            .collect();
+
+        terms.sort();
+        self.terms = terms;
     }
 }
 
