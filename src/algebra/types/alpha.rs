@@ -27,7 +27,7 @@ pub const ALLOWED_ALPHA_FORMS: [Form; 16] = [
     Form::Bivector(Index::Zero, Index::Three),
 ];
 
-pub(super) const ALLOWED_ALPHA_STRINGS: [&'static str; 16] = [
+pub(crate) const ALLOWED_ALPHA_STRINGS: [&'static str; 16] = [
     "p", "23", "31", "12", "0", "023", "031", "012", "123", "1", "2", "3", "0123", "01", "02", "03",
 ];
 

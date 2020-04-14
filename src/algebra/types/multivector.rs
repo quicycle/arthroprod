@@ -181,10 +181,10 @@ impl fmt::Display for MultiVector {
                         let mut vec_str =
                             for_comp.iter().fold(format!("  a{}: (", c), |acc, val| {
                                 let sign_str = match val.sign() {
-                                    Sign::Pos => "",
+                                    Sign::Pos => "+",
                                     Sign::Neg => "-",
                                 };
-                                format!("{}{}{}, ", acc, sign_str, val.xi_str())
+                                format!("{}{}{} ", acc, sign_str, val.xi_str())
                             });
                         let desired_len = vec_str.len() - 2;
                         vec_str.split_off(desired_len);

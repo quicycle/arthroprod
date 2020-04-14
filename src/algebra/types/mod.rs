@@ -12,6 +12,7 @@ mod multivector;
 mod term;
 mod xi;
 
+pub(crate) use self::alpha::ALLOWED_ALPHA_STRINGS;
 pub use self::alpha::{Alpha, ALLOWED_ALPHA_FORMS};
 pub use self::enums::{Form, Index, Sign};
 pub use self::magnitude::Magnitude;

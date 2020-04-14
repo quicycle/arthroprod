@@ -6,5 +6,8 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
-pub mod algebra;
+#[macro_use]
 pub mod macros;
+
+pub mod algebra;
+pub mod prelude;

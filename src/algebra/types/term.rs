@@ -117,11 +117,13 @@ impl Term {
             self.numerator.dotted_string()
         };
 
-        if self.denominator.is_empty() {
+        let s = if self.denominator.is_empty() {
             format!("{}", numerator)
         } else {
             format!("{}/{}", numerator, self.denominator.dotted_string())
-        }
+        };
+
+        format!("{}{}", partial_str(&self.partials), s)
     }
 
     /// Attempt to add two Terms. This will only succeed if their summation_key
