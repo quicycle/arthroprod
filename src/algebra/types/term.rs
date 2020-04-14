@@ -76,6 +76,11 @@ impl Term {
         self.alpha.form()
     }
 
+    /// Extract the sign of this Term
+    pub fn sign(&self) -> Sign {
+        self.alpha.sign()
+    }
+
     /// Extract a copy of the [`Alpha`] of this Term
     pub fn alpha(&self) -> Alpha {
         self.alpha.clone()
@@ -137,7 +142,7 @@ impl Term {
         }
 
         if self.summation_key() == other.summation_key() {
-            Some(match (self.alpha.sign(), other.alpha.sign()) {
+            Some(match (self.sign(), other.sign()) {
                 (Sign::Pos, Sign::Pos) | (Sign::Neg, Sign::Neg) => {
                     let mut t = self.clone();
                     t.magnitude += other.magnitude;

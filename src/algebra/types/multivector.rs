@@ -52,12 +52,13 @@ impl MultiVector {
 
     /// Extract a copy of the terms in this MultiVector that have the supplied [`Form`]
     pub fn get(&self, c: &Form) -> Option<Vec<Term>> {
-        let terms: Vec<Term> = self
+        let mut terms: Vec<Term> = self
             .terms
             .iter()
             .filter(|t| &t.form() == c)
             .map(|t| t.clone())
             .collect();
+        terms.sort();
 
         return if terms.len() > 0 { Some(terms) } else { None };
     }
@@ -177,16 +178,14 @@ impl fmt::Display for MultiVector {
             .map(|c| {
                 self.get(c).map(|for_comp| {
                     format!("{}),", {
-                        let mut vec_str = for_comp.iter().fold(
-                            String::from(format!("  a{}: (", c)),
-                            |acc, val| {
-                                let sign_str = match val.alpha().sign() {
+                        let mut vec_str =
+                            for_comp.iter().fold(format!("  a{}: (", c), |acc, val| {
+                                let sign_str = match val.sign() {
                                     Sign::Pos => "",
                                     Sign::Neg => "-",
                                 };
                                 format!("{}{}{}, ", acc, sign_str, val.xi_str())
-                            },
-                        );
+                            });
                         let desired_len = vec_str.len() - 2;
                         vec_str.split_off(desired_len);
                         vec_str

@@ -1,7 +1,7 @@
 use std::mem;
 
 use super::ar_product;
-use crate::algebra::types::{Alpha, Axis, Form, Sign, Term};
+use crate::algebra::types::{Alpha, Form, Index, Sign, Term};
 
 /// Types that implement AR are able to be consumed by any of the library operations
 /// provided by arthroprod. The return of these library functions is typically something
@@ -161,11 +161,11 @@ pub trait AR {
     /// It is the inverse of an element through a0123 as opposed to ap, meaning that
     /// the product of an element with its dual is always a0123.
     fn dual(&self) -> Self::Output {
-        let axes = [0, 1, 2, 3]
+        let indices = [0, 1, 2, 3]
             .iter()
-            .map(|n| Axis::try_from_u8(*n).unwrap())
+            .map(|n| Index::try_from_u8(*n).unwrap())
             .collect();
-        let q = Term::new(None, Alpha::try_from_axes(Sign::Neg, &axes).unwrap());
+        let q = Term::new(None, Alpha::try_from_indices(Sign::Neg, &indices).unwrap());
 
         Self::Output::from_terms(
             self.as_terms()

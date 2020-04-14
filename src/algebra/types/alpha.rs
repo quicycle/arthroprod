@@ -1,30 +1,30 @@
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{ar_product, Axis, Form, Sign, Term, AR};
+use crate::algebra::{ar_product, Form, Index, Sign, Term, AR};
 
 /// When creating Alphas only the following forms are valid
 pub const ALLOWED_ALPHA_FORMS: [Form; 16] = [
     // Zet B
     Form::Point,
-    Form::Bivector(Axis::Y, Axis::Z),
-    Form::Bivector(Axis::Z, Axis::X),
-    Form::Bivector(Axis::X, Axis::Y),
+    Form::Bivector(Index::Two, Index::Three),
+    Form::Bivector(Index::Three, Index::One),
+    Form::Bivector(Index::One, Index::Two),
     // Zet T
-    Form::Vector(Axis::T),
-    Form::Trivector(Axis::T, Axis::Y, Axis::Z),
-    Form::Trivector(Axis::T, Axis::Z, Axis::X),
-    Form::Trivector(Axis::T, Axis::X, Axis::Y),
+    Form::Vector(Index::Zero),
+    Form::Trivector(Index::Zero, Index::Two, Index::Three),
+    Form::Trivector(Index::Zero, Index::Three, Index::One),
+    Form::Trivector(Index::Zero, Index::One, Index::Two),
     // Zet A
-    Form::Trivector(Axis::X, Axis::Y, Axis::Z),
-    Form::Vector(Axis::X),
-    Form::Vector(Axis::Y),
-    Form::Vector(Axis::Z),
+    Form::Trivector(Index::One, Index::Two, Index::Three),
+    Form::Vector(Index::One),
+    Form::Vector(Index::Two),
+    Form::Vector(Index::Three),
     // Zet E
-    Form::Quadrivector(Axis::T, Axis::X, Axis::Y, Axis::Z),
-    Form::Bivector(Axis::T, Axis::X),
-    Form::Bivector(Axis::T, Axis::Y),
-    Form::Bivector(Axis::T, Axis::Z),
+    Form::Quadrivector(Index::Zero, Index::One, Index::Two, Index::Three),
+    Form::Bivector(Index::Zero, Index::One),
+    Form::Bivector(Index::Zero, Index::Two),
+    Form::Bivector(Index::Zero, Index::Three),
 ];
 
 /// An Alpha represents a pure element of the algebra without magnitude.
@@ -48,10 +48,10 @@ impl Alpha {
     }
 
     /// Allow or construction of Alpha values from a dynamically created vector of
-    /// [`Axis`] values. Errors if the given vector does not map to one of the allowed
+    /// [`Index`] values. Errors if the given vector does not map to one of the allowed
     /// forms given in [`ALLOWED_ALPHA_FORMS`].
-    pub fn try_from_axes(sign: Sign, axes: &Vec<Axis>) -> Result<Alpha, String> {
-        let form = Form::try_from_axes(axes)?;
+    pub fn try_from_indices(sign: Sign, indices: &Vec<Index>) -> Result<Alpha, String> {
+        let form = Form::try_from_indices(indices)?;
 
         Alpha::new(sign, form)
     }

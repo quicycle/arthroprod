@@ -36,7 +36,7 @@
 //! repeat the process until we are done.
 //!
 
-use crate::algebra::{Alpha, Axis, Form, Sign};
+use crate::algebra::{Alpha, Form, Index, Sign};
 
 /// Compute the full product of i and j under the +--- metric and form ordering
 /// conventions given in ALLOWED_ALPHA_formS.
@@ -54,7 +54,7 @@ pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
         _ => (),
     };
 
-    let (pop_sign, axes) = pop_and_cancel_repeated_axes(i_form, j_form);
+    let (pop_sign, axes) = pop_and_cancel_repeated_indices(i_form, j_form);
     sign = sign.combine(&pop_sign);
 
     // For ap and vectors we don't have an ordering to worry about
@@ -67,40 +67,42 @@ pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
     let (ordering_sign, target) = pop_to_correct_ordering(&axes);
     sign = sign.combine(&ordering_sign);
 
-    let comp = Form::try_from_axes(&target).unwrap();
+    let comp = Form::try_from_indices(&target).unwrap();
     return Alpha::new(sign, comp).unwrap();
 }
 
 // NOTE: This is where we are hard coding the +--- metric along with assuming
 //       that we are using conventional sign rules for combining +/-
-fn apply_metric(s: Sign, a: &Axis) -> Sign {
+fn apply_metric(s: Sign, a: &Index) -> Sign {
     match a {
-        Axis::T => s,
+        Index::Zero => s,
         _ => s.combine(&Sign::Neg),
     }
 }
 
 // See test case below that ensures this is correct with the current Allowed config
-fn get_target_ordering(axes: &Vec<Axis>) -> Vec<Axis> {
+fn get_target_ordering(axes: &Vec<Index>) -> Vec<Index> {
     let mut sorted = axes.clone();
     sorted.sort();
 
     match sorted[..] {
         // B
-        [Axis::Y, Axis::Z] => vec![Axis::Y, Axis::Z],
-        [Axis::X, Axis::Z] => vec![Axis::Z, Axis::X],
-        [Axis::X, Axis::Y] => vec![Axis::X, Axis::Y],
+        [Index::Two, Index::Three] => vec![Index::Two, Index::Three],
+        [Index::One, Index::Three] => vec![Index::Three, Index::One],
+        [Index::One, Index::Two] => vec![Index::One, Index::Two],
         // E
-        [Axis::T, Axis::X] => vec![Axis::T, Axis::X],
-        [Axis::T, Axis::Y] => vec![Axis::T, Axis::Y],
-        [Axis::T, Axis::Z] => vec![Axis::T, Axis::Z],
+        [Index::Zero, Index::One] => vec![Index::Zero, Index::One],
+        [Index::Zero, Index::Two] => vec![Index::Zero, Index::Two],
+        [Index::Zero, Index::Three] => vec![Index::Zero, Index::Three],
         // T
-        [Axis::T, Axis::Y, Axis::Z] => vec![Axis::T, Axis::Y, Axis::Z],
-        [Axis::T, Axis::X, Axis::Z] => vec![Axis::T, Axis::Z, Axis::X],
-        [Axis::T, Axis::X, Axis::Y] => vec![Axis::T, Axis::X, Axis::Y],
+        [Index::Zero, Index::Two, Index::Three] => vec![Index::Zero, Index::Two, Index::Three],
+        [Index::Zero, Index::One, Index::Three] => vec![Index::Zero, Index::Three, Index::One],
+        [Index::Zero, Index::One, Index::Two] => vec![Index::Zero, Index::One, Index::Two],
         // h, q
-        [Axis::X, Axis::Y, Axis::Z] => vec![Axis::X, Axis::Y, Axis::Z],
-        [Axis::T, Axis::X, Axis::Y, Axis::Z] => vec![Axis::T, Axis::X, Axis::Y, Axis::Z],
+        [Index::One, Index::Two, Index::Three] => vec![Index::One, Index::Two, Index::Three],
+        [Index::Zero, Index::One, Index::Two, Index::Three] => {
+            vec![Index::Zero, Index::One, Index::Two, Index::Three]
+        }
         // p, t & A have no ordering
         _ => axes.clone(),
     }
@@ -109,7 +111,7 @@ fn get_target_ordering(axes: &Vec<Axis>) -> Vec<Axis> {
 // This makes use of apply_metric above to determine sign changes when cancelling repeated
 // axes and starts from a positive sign. The return value of this function needs to be
 // combined with any accumulated sign changes to obtain the true sign.
-fn pop_and_cancel_repeated_axes(i_form: Form, j_form: Form) -> (Sign, Vec<Axis>) {
+fn pop_and_cancel_repeated_indices(i_form: Form, j_form: Form) -> (Sign, Vec<Index>) {
     let i_axes = i_form.as_vec();
     let j_axes = j_form.as_vec();
     let mut sign = Sign::Pos;
@@ -151,7 +153,7 @@ fn pop_and_cancel_repeated_axes(i_form: Form, j_form: Form) -> (Sign, Vec<Axis>)
     return (sign, axes);
 }
 
-fn pop_to_correct_ordering(axes: &Vec<Axis>) -> (Sign, Vec<Axis>) {
+fn pop_to_correct_ordering(axes: &Vec<Index>) -> (Sign, Vec<Index>) {
     let target = get_target_ordering(&axes);
     let mut sign = Sign::Pos;
 
@@ -187,7 +189,7 @@ fn permuted_indices<T: Ord>(s1: &[T], s2: &[T]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algebra::{Alpha, Axis, Form, ALLOWED_ALPHA_FORMS, AR};
+    use crate::algebra::{Alpha, Form, Index, ALLOWED_ALPHA_FORMS, AR};
 
     #[test]
     fn target_ordering_is_always_correct_for_allowed() {
@@ -200,7 +202,7 @@ mod tests {
     #[test]
     fn maching_forms_cancel_completely() {
         for c in ALLOWED_ALPHA_FORMS.iter() {
-            let (_, axes) = pop_and_cancel_repeated_axes(c.clone(), *c);
+            let (_, axes) = pop_and_cancel_repeated_indices(c.clone(), *c);
             assert_eq!(axes, vec![]);
         }
     }
@@ -209,7 +211,7 @@ mod tests {
     fn cancelling_repreats_never_leaves_duplicate_axes() {
         for c1 in ALLOWED_ALPHA_FORMS.iter() {
             for c2 in ALLOWED_ALPHA_FORMS.iter() {
-                let (_, mut axes) = pop_and_cancel_repeated_axes(*c1, *c2);
+                let (_, mut axes) = pop_and_cancel_repeated_indices(*c1, *c2);
                 axes.sort();
 
                 let mut deduped = axes.clone();
@@ -221,7 +223,7 @@ mod tests {
 
     #[test]
     fn swapping_axes_negates_when_not_squaring() {
-        let axes = vec![Axis::T, Axis::X, Axis::Y, Axis::Z];
+        let axes = vec![Index::Zero, Index::One, Index::Two, Index::Three];
         for i in axes.clone().iter() {
             for j in axes.iter() {
                 if i == j {

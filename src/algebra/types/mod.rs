@@ -13,7 +13,7 @@ mod term;
 mod xi;
 
 pub use self::alpha::{Alpha, ALLOWED_ALPHA_FORMS};
-pub use self::enums::{Axis, Form, Sign};
+pub use self::enums::{Form, Index, Sign};
 pub use self::magnitude::Magnitude;
 pub use self::multivector::MultiVector;
 pub use self::term::Term;
