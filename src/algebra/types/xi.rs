@@ -1,10 +1,12 @@
+use std::cmp;
 use std::collections::HashMap;
 use std::fmt;
 use std::ops;
 
+use crate::algebra::types::alpha::ALLOWED_ALPHA_STRINGS;
 use crate::algebra::Form;
 
-#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
+#[derive(Hash, Eq, Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Xi {
     value: Option<String>, // None for non-leaf nodes
     partials: Vec<Form>,
@@ -128,6 +130,39 @@ impl ops::Mul for Xi {
 
     fn mul(self, rhs: Xi) -> Self::Output {
         Xi::merge(&vec![self, rhs])
+    }
+}
+
+impl cmp::Ord for Xi {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        fn cmp_ix(l: &String, r: &String) -> cmp::Ordering {
+            let opt_i1 = ALLOWED_ALPHA_STRINGS.iter().position(|f| f == &l);
+            let opt_i2 = ALLOWED_ALPHA_STRINGS.iter().position(|f| f == &r);
+
+            // Compare indices if both are present, otherwise place indexed
+            // first and non-indexed in alphanumeric ordering after
+            match (opt_i1, opt_i2) {
+                (Some(i1), Some(i2)) => i1.cmp(&i2),
+                (Some(_), None) => cmp::Ordering::Less,
+                (None, Some(_)) => cmp::Ordering::Greater,
+                (None, None) => l.cmp(&r),
+            }
+        }
+
+        match (self.children.len(), other.children.len()) {
+            // Should be leaf nodes with a value
+            (0, 0) => match (&self.value, &other.value) {
+                (Some(l), Some(r)) => cmp_ix(l, r).then(self.partials.cmp(&other.partials)),
+                _ => self.partials.cmp(&other.partials),
+            },
+            _ => self.children.cmp(&other.children),
+        }
+    }
+}
+
+impl cmp::PartialOrd for Xi {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 

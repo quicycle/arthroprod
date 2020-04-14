@@ -1,3 +1,4 @@
+use std::cmp;
 use std::fmt;
 use std::ops;
 
@@ -6,7 +7,7 @@ use crate::algebra::{ar_product, Alpha, Form, Magnitude, Sign, Xi, AR};
 
 /// A Term represents a real scalar magnitude along with a paired [`Alpha`] giving the
 /// proper Space-Time [`Form`] in accordence with the principle of Absolute Relativity.
-#[derive(Hash, Eq, Debug, PartialOrd, PartialEq, Clone, Ord, Serialize, Deserialize)]
+#[derive(Hash, Eq, Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Term {
     magnitude: Magnitude,
     alpha: Alpha,
@@ -267,6 +268,24 @@ impl fmt::Display for Term {
         let p_str = partial_str(&self.partials);
 
         write!(f, "{}{}{}({})", self.alpha, m_str, p_str, self.xi_str())
+    }
+}
+
+impl cmp::Ord for Term {
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        self.form()
+            .cmp(&other.form())
+            .then(self.numerator.cmp(&other.numerator))
+            .then(self.denominator.cmp(&other.denominator))
+            .then(self.partials.cmp(&other.partials))
+            .then(self.sign().cmp(&other.sign()))
+            .then(self.magnitude.cmp(&other.magnitude))
+    }
+}
+
+impl cmp::PartialOrd for Term {
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 

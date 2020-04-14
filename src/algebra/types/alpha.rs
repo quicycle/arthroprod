@@ -27,6 +27,10 @@ pub const ALLOWED_ALPHA_FORMS: [Form; 16] = [
     Form::Bivector(Index::Zero, Index::Three),
 ];
 
+pub(super) const ALLOWED_ALPHA_STRINGS: [&'static str; 16] = [
+    "p", "23", "31", "12", "0", "023", "031", "012", "123", "1", "2", "3", "0123", "01", "02", "03",
+];
+
 /// An Alpha represents a pure element of the algebra without magnitude.
 /// It is composed of 0-4 Dimensions with the number of dimensions determining
 /// its form: i.e. scalar, vector, bivector, trivector, quadrivector
@@ -101,5 +105,19 @@ impl ops::Neg for Alpha {
 impl fmt::Display for Alpha {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}a{}", self.sign, self.form)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn allowed_consts_match() {
+        let forms: Vec<String> = ALLOWED_ALPHA_FORMS
+            .iter()
+            .map(|f| format!("{}", f))
+            .collect();
+        assert_eq!(forms, ALLOWED_ALPHA_STRINGS);
     }
 }
