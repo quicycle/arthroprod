@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate arthroprod;
 
-use arthroprod::algebra::{full, Form, MultiVector, AR};
+use arthroprod::algebra::{full, Form, MultiVector, Sign, ALLOWED_ALPHA_FORMS, AR};
 use arthroprod::prelude::*;
 
 // negate everything but the bivectors
@@ -26,4 +26,16 @@ fn main() {
     println!("m ^ m_ddagger = {}\n", mres);
 
     println!("Dmu G = {}", Dmu().left_apply(G()));
+    let res = Dmu().left_apply(G());
+
+    for form in ALLOWED_ALPHA_FORMS.iter() {
+        if let Some(terms) = res.get(form) {
+            let signs = terms
+                .iter()
+                .map(|t| if t.sign() == Sign::Pos { "+" } else { "-" })
+                .collect::<Vec<&str>>()
+                .join("");
+            println!("{} {}", signs, terms[0].form());
+        }
+    }
 }

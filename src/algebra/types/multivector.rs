@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::ops;
 
-use crate::algebra::{Form, Magnitude, Sign, Term, ALLOWED_ALPHA_FORMS, AR};
+use crate::algebra::{Form, Magnitude, Term, ALLOWED_ALPHA_FORMS, AR};
 
 /// A MultiVector is an ordered collection of a Terms representing a particular
 /// composite quantity within the Algebra. In its simplest form, a MultiVector is
@@ -173,28 +173,19 @@ impl ops::Neg for MultiVector {
 
 impl fmt::Display for MultiVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = ALLOWED_ALPHA_FORMS
-            .iter()
-            .map(|c| {
-                self.get(c).map(|for_comp| {
-                    format!("{}),", {
-                        let mut vec_str =
-                            for_comp.iter().fold(format!("  a{}: (", c), |acc, val| {
-                                let sign_str = match val.sign() {
-                                    Sign::Pos => "+",
-                                    Sign::Neg => "-",
-                                };
-                                format!("{}{}{} ", acc, sign_str, val.xi_str())
-                            });
-                        let desired_len = vec_str.len() - 2;
-                        vec_str.split_off(desired_len);
-                        vec_str
-                    })
-                })
-            })
-            .filter_map(|s| s)
-            .fold(String::from(""), |s, line| format!("{}\n{}", s, line));
+        let mut rows = vec![];
 
-        write!(f, "{{{}\n}}", s)
+        for form in ALLOWED_ALPHA_FORMS.iter() {
+            if let Some(terms) = self.get(form) {
+                let s = terms
+                    .iter()
+                    .map(|term| format!("{}{}", term.sign(), term.xi_str()))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+                rows.push(format!("  a{:<5}( {} )", form.to_string(), s));
+            }
+        }
+
+        write!(f, "{{\n{}\n}}", rows.join("\n"))
     }
 }
