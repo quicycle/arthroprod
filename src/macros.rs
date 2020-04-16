@@ -1,3 +1,7 @@
+//! Utility macros for constructing algebraic structures to manipulate. All of these will panic if
+//! given invalid indices to work with so make sure to initialise your data early on in your
+//! program.
+
 /// Simpler variadic generation of [`Alpha`] values.
 /// This is the recommended way of creating raw alpha values if they are needed. Arguments
 /// are u8s in the range 0-3.
