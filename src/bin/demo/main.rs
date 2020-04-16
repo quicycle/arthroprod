@@ -25,8 +25,8 @@ fn main() {
     println!("m = {}", m);
     println!("m ^ m_ddagger = {}\n", mres);
 
-    println!("Dmu G = {}", Dmu().left_apply(G()));
-    let res = Dmu().left_apply(G());
+    let res = Dmu().left_apply(&G());
+    println!("Dmu G = {}\n", res);
 
     for form in ALLOWED_ALPHA_FORMS.iter() {
         if let Some(terms) = res.get(form) {

@@ -14,15 +14,15 @@ impl ArDifferential {
         }
     }
 
-    pub fn left_apply(&self, mvec: MultiVector) -> MultiVector {
+    pub fn left_apply(&self, mvec: &MultiVector) -> MultiVector {
         self.apply(mvec, ApplyFrom::Left)
     }
 
-    pub fn right_apply(&self, mvec: MultiVector) -> MultiVector {
+    pub fn right_apply(&self, mvec: &MultiVector) -> MultiVector {
         self.apply(mvec, ApplyFrom::Right)
     }
 
-    fn apply(&self, mvec: MultiVector, side: ApplyFrom) -> MultiVector {
+    fn apply(&self, mvec: &MultiVector, side: ApplyFrom) -> MultiVector {
         MultiVector::from_terms(
             mvec.as_terms()
                 .iter()
