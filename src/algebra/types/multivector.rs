@@ -194,8 +194,12 @@ impl fmt::Display for MultiVector {
                     .map(|c| c.join(", "))
                     .collect::<Vec<String>>();
 
-                if form_rows.len() == 1 {
-                    rows.push(format!("  a{:<5}( {} )", form.to_string(), form_rows[0]));
+                if terms.len() < n_per_line + (n_per_line / 2) {
+                    rows.push(format!(
+                        "  a{:<5}( {} )",
+                        form.to_string(),
+                        form_rows.join(" ")
+                    ));
                 } else {
                     rows.push(format!("  a{:<5}(", form.to_string()));
                     form_rows
