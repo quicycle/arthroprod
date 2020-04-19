@@ -2,7 +2,6 @@ use std::cmp;
 use std::fmt;
 use std::ops;
 
-use super::xi::partial_str;
 use crate::algebra::{ar_product, Alpha, Form, Magnitude, Sign, Xi, AR};
 
 /// A Term represents a real scalar magnitude along with a paired [`Alpha`] giving the
@@ -11,9 +10,7 @@ use crate::algebra::{ar_product, Alpha, Form, Magnitude, Sign, Xi, AR};
 pub struct Term {
     magnitude: Magnitude,
     alpha: Alpha,
-    partials: Vec<Form>,
-    numerator: Xi,
-    denominator: Xi,
+    xi: Xi,
 }
 
 impl AR for Term {
@@ -35,9 +32,7 @@ impl AR for Term {
         Term {
             magnitude: 1 / self.magnitude,
             alpha: self.alpha.inverse(),
-            partials: self.partials.clone(),
-            numerator: self.denominator.clone(),
-            denominator: self.numerator.clone(),
+            xi: self.xi.inverse(),
         }
     }
 }
@@ -55,9 +50,7 @@ impl Term {
         Term {
             magnitude: 1.into(),
             alpha: alpha,
-            partials: vec![],
-            numerator: xi,
-            denominator: Xi::empty(),
+            xi: xi,
         }
     }
 
@@ -66,9 +59,7 @@ impl Term {
         Term {
             magnitude: 1.into(),
             alpha: alpha,
-            partials: vec![],
-            numerator: Xi::merge(&xis.iter().map(|s| Xi::new(s)).collect()),
-            denominator: Xi::empty(),
+            xi: Xi::merge(&xis.iter().map(|s| Xi::new(s)).collect()),
         }
     }
 
@@ -99,31 +90,17 @@ impl Term {
 
     /// Add a single partial derivative and resort
     pub fn add_partial(&mut self, wrt: &Alpha) {
-        self.partials.push(wrt.form());
-        self.partials.sort();
+        self.xi.add_partial(&wrt.form())
     }
 
     /// Replace the current set of partial derivatives
     pub fn set_partials(&mut self, partials: Vec<Form>) {
-        self.partials = partials;
-        self.partials.sort();
+        self.xi.set_partials(partials)
     }
 
     /// Generate a string representation of the underlying Xi values for this term
     pub fn xi_str(&self) -> String {
-        let numerator = if self.numerator.is_empty() {
-            "1".to_string()
-        } else {
-            self.numerator.dotted_string()
-        };
-
-        let s = if self.denominator.is_empty() {
-            format!("{}", numerator)
-        } else {
-            format!("{}/{}", numerator, self.denominator.dotted_string())
-        };
-
-        format!("{}{}", partial_str(&self.partials), s)
+        format!("{}", self.xi)
     }
 
     /// Attempt to add two Terms. This will only succeed if their summation_key
@@ -164,9 +141,7 @@ impl Term {
         Term {
             magnitude: self.magnitude * other.magnitude,
             alpha: ar_product(&self.alpha, &other.alpha),
-            partials: Vec::new(),
-            numerator: Xi::merge(&vec![self.numerator.clone(), other.numerator.clone()]),
-            denominator: Xi::merge(&vec![self.denominator.clone(), other.denominator.clone()]),
+            xi: Xi::merge(&vec![self.xi.clone(), other.xi.clone()]),
         }
     }
 
@@ -267,9 +242,8 @@ impl fmt::Display for Term {
         } else {
             String::new()
         };
-        let p_str = partial_str(&self.partials);
 
-        write!(f, "{}{}{}({})", self.alpha, m_str, p_str, self.xi_str())
+        write!(f, "{}{}({})", self.alpha, m_str, self.xi_str())
     }
 }
 
@@ -277,9 +251,7 @@ impl cmp::Ord for Term {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
         self.form()
             .cmp(&other.form())
-            .then(self.numerator.cmp(&other.numerator))
-            .then(self.denominator.cmp(&other.denominator))
-            .then(self.partials.cmp(&other.partials))
+            .then(self.xi.cmp(&other.xi))
             .then(self.sign().cmp(&other.sign()))
             .then(self.magnitude.cmp(&other.magnitude))
     }
@@ -297,18 +269,6 @@ mod tests {
 
     use super::*;
     use test_case::test_case;
-
-    #[test_case(Term::new(None, alpha!(0 1)), Term::new(None, alpha!(0 1)))]
-    #[test_case(Term::new(None, alpha!(2 3)), Term::new(None, -alpha!(2 3)))]
-    #[test_case(term!(0 3 1), -term!(0 3 1))]
-    #[test_case(term!("foo", 1 2 3), term!("foo", 1 2 3))]
-    #[test_case(term!(["foo", "bar"], 0 1 2 3), -term!(["foo", "bar"], 0 1 2 3))]
-    fn inversion_works(t: Term, u: Term) {
-        let mut expected = u.clone();
-        expected.numerator = u.denominator;
-        expected.denominator = u.numerator;
-        assert_eq!(t.inverse(), expected);
-    }
 
     // TODO: This currently "works". Should it?
     // #[test_case(term!("foo", 0 2), term!(["foo"], 0 2), false)]
