@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::algebra::{ar_product, Alpha, MultiVector, Term, AR};
 
 #[derive(Hash, Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Serialize, Deserialize)]
@@ -34,6 +36,20 @@ impl ArDifferential {
                         .collect::<Vec<Term>>()
                 })
                 .collect(),
+        )
+    }
+}
+
+impl fmt::Display for ArDifferential {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{{ {} }}",
+            self.wrt
+                .iter()
+                .map(|f| format!("{}", f))
+                .collect::<Vec<String>>()
+                .join(" ")
         )
     }
 }
