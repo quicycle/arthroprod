@@ -182,15 +182,27 @@ impl ops::Neg for MultiVector {
 impl fmt::Display for MultiVector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut rows = vec![];
+        let n_per_line = 6;
 
         for form in ALLOWED_ALPHA_FORMS.iter() {
             if let Some(terms) = self.get(form) {
-                let s = terms
+                let form_rows = terms
                     .iter()
                     .map(|term| format!("{}{}", term.sign(), term.xi_str()))
                     .collect::<Vec<String>>()
-                    .join(", ");
-                rows.push(format!("  a{:<5}( {} )", form.to_string(), s));
+                    .chunks(n_per_line)
+                    .map(|c| c.join(", "))
+                    .collect::<Vec<String>>();
+
+                if form_rows.len() == 1 {
+                    rows.push(format!("  a{:<5}( {} )", form.to_string(), form_rows[0]));
+                } else {
+                    rows.push(format!("  a{:<5}(", form.to_string()));
+                    form_rows
+                        .iter()
+                        .for_each(|r| rows.push(format!("           {}", r.to_string())));
+                    rows.push("  )".to_string());
+                }
             }
         }
 
