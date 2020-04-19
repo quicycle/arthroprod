@@ -37,6 +37,14 @@ impl MultiVector {
         MultiVector { terms: vec![] }
     }
 
+    /// Returns an iterator over terms contained in this MultiVector
+    pub fn iter(&self) -> MvecIterator {
+        MvecIterator {
+            ix: 0,
+            terms: &self.terms,
+        }
+    }
+
     /// Push a new term into this MultiVector and reorder the terms if needed.
     pub fn push(&mut self, term: Term) {
         self.terms.push(term);
@@ -187,5 +195,20 @@ impl fmt::Display for MultiVector {
         }
 
         write!(f, "{{\n{}\n}}", rows.join("\n"))
+    }
+}
+
+pub struct MvecIterator<'a> {
+    ix: usize,
+    terms: &'a Vec<Term>,
+}
+
+impl<'a> Iterator for MvecIterator<'a> {
+    type Item = &'a Term;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let item = self.terms.get(self.ix);
+        self.ix += 1;
+        return item;
     }
 }

@@ -51,16 +51,14 @@ impl Xi {
     pub fn merge(xis: &Vec<Xi>) -> Xi {
         // pull up children from empty_parents so that we don't stack empty
         // nodes on top of one another
-        let mut children: Vec<Xi> = xis
-            .iter()
-            .flat_map(|x| {
-                if x.is_empty_parent() {
-                    x.children.clone()
-                } else {
-                    vec![x.clone()]
-                }
-            })
-            .collect();
+        let mut children = vec![];
+        for x in xis.iter() {
+            if x.is_empty_parent() {
+                children.extend(x.children.clone());
+            } else {
+                children.push(x.clone());
+            }
+        }
         children.sort();
 
         Xi {
@@ -210,6 +208,72 @@ mod tests {
         Xi { value: None, partials: vec![], children: vec![Xi::new("bar"), Xi::new("baz"), Xi::new("foo")] }
     )]
     fn merge_with_empty_works(xis: Vec<Xi>, expected: Xi) {
+        assert_eq!(Xi::merge(&xis), expected);
+    }
+
+    #[test_case(
+        vec![
+            Xi { value: Some("foo".to_string()), partials: vec![alpha!(0).form()], children: vec![] },
+            Xi { value: Some("bar".to_string()), partials: vec![], children: vec![] },
+        ],
+        Xi {
+            value: None,
+            partials: vec![],
+            children: vec![
+                Xi { value: Some("bar".to_string()), partials: vec![], children: vec![] },
+                Xi { value: Some("foo".to_string()), partials: vec![alpha!(0).form()], children: vec![] },
+            ]
+        }
+    )]
+    #[test_case(
+        vec![
+            Xi { value: Some("foo".to_string()), partials: vec![alpha!(0).form()], children: vec![] },
+            Xi { value: Some("baz".to_string()), partials: vec![alpha!(0).form()], children: vec![] },
+            Xi { value: Some("bar".to_string()), partials: vec![], children: vec![] },
+        ],
+        Xi {
+            value: None,
+            partials: vec![],
+            children: vec![
+                Xi { value: Some("bar".to_string()), partials: vec![], children: vec![] },
+                Xi { value: Some("baz".to_string()), partials: vec![alpha!(0).form()], children: vec![] },
+                Xi { value: Some("foo".to_string()), partials: vec![alpha!(0).form()], children: vec![] },
+            ]
+        }
+    )]
+    fn merge_with_top_level_partials_works(xis: Vec<Xi>, expected: Xi) {
+        assert_eq!(Xi::merge(&xis), expected);
+    }
+
+    #[test_case(
+        vec![
+            Xi { value: None, partials: vec![], children: vec![Xi::new("foo")] },
+            Xi {
+                value: None,
+                partials: vec![],
+                children: vec![
+                    Xi {
+                        value: Some("bar".to_string()),
+                        partials: vec![alpha!(0).form()],
+                        children: vec![]
+                    }
+                ]
+            },
+        ],
+        Xi {
+            value: None,
+            partials: vec![],
+            children: vec![
+                Xi {
+                    value: Some("bar".to_string()),
+                    partials: vec![alpha!(0).form()],
+                    children: vec![]
+                },
+                Xi::new("foo"),
+            ]
+        }
+    )]
+    fn merge_with_partials_on_children_works(xis: Vec<Xi>, expected: Xi) {
         assert_eq!(Xi::merge(&xis), expected);
     }
 }
