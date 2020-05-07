@@ -1,5 +1,3 @@
-//! Standard operations on AR types: Alphas and Multivectors.
-//!
 //! Finding the product of αs
 //! =========================
 //! This is based on a set of simplification rules based on allowed
@@ -38,86 +36,73 @@
 //! repeat the process until we are done.
 //!
 
-use crate::algebra::{Alpha, Axis, Component, Sign, Term};
+use crate::algebra::{Alpha, Form, Index, Sign};
 
-/// Types that implement AR are able to be consumed by any of the library operations
-/// provided by arthroprod. The return of these library functions is always a
-/// MultiVector.
-pub trait AR {
-    /// Convert the type to a slice of terms (defaulting to symbolic Xi values)
-    fn as_terms(&self) -> Vec<Term>;
-    fn from_terms(terms: Vec<Term>) -> Self;
-}
-
-/// Compute the full product of i and j under the +--- metric and component ordering
-/// conventions given in ALLOWED_ALPHA_COMPONENTS.
-/// This function will panic if invalid components are somehow provided in order to
+/// Compute the full product of i and j under the +--- metric and form ordering
+/// conventions given in ALLOWED_ALPHA_formS.
+/// This function will panic if invalid forms are somehow provided in order to
 /// prevent malformed calculations from running.
 pub fn ar_product(i: &Alpha, j: &Alpha) -> Alpha {
     let mut sign = i.sign().combine(&j.sign());
-    let i_component = i.component();
-    let j_component = j.component();
+    let i_form = i.form();
+    let j_form = j.form();
 
-    // Multiplication by ap is idempotent on the component but does affect sign
-    match (i.is_point(), j.is_point()) {
-        (true, _) => return Alpha::new(sign, j_component).unwrap(),
-        (_, true) => return Alpha::new(sign, i_component).unwrap(),
-        (false, false) => (),
+    // Multiplication by ap is idempotent on the form but does affect sign
+    match (i.form(), j.form()) {
+        (Form::Point, _) => return Alpha::new(sign, j_form).unwrap(),
+        (_, Form::Point) => return Alpha::new(sign, i_form).unwrap(),
+        _ => (),
     };
 
-    let (pop_sign, axes) = pop_and_cancel_repeated_axes(i_component, j_component);
+    let (pop_sign, axes) = pop_and_cancel_repeated_indices(i_form, j_form);
     sign = sign.combine(&pop_sign);
 
     // For ap and vectors we don't have an ordering to worry about
     match axes.len() {
-        0 => return Alpha::new(sign, Component::Point).unwrap(),
-        1 => return Alpha::new(sign, Component::Vector(axes[0])).unwrap(),
+        0 => return Alpha::new(sign, Form::Point).unwrap(),
+        1 => return Alpha::new(sign, Form::Vector(axes[0])).unwrap(),
         _ => (),
     };
 
     let (ordering_sign, target) = pop_to_correct_ordering(&axes);
     sign = sign.combine(&ordering_sign);
 
-    let comp = Component::try_from_axes(&target).unwrap();
+    let comp = Form::try_from_indices(&target).unwrap();
     return Alpha::new(sign, comp).unwrap();
-}
-
-/// Compute the full_product inverse of an Alpha element.
-/// This is defined such that x ^ inverse(x) == ap
-pub fn invert_alpha(a: &Alpha) -> Alpha {
-    Alpha::new(a.sign().combine(&ar_product(&a, &a).sign()), a.component()).unwrap()
 }
 
 // NOTE: This is where we are hard coding the +--- metric along with assuming
 //       that we are using conventional sign rules for combining +/-
-fn apply_metric(s: Sign, a: &Axis) -> Sign {
+fn apply_metric(s: Sign, a: &Index) -> Sign {
     match a {
-        Axis::T => s,
+        Index::Zero => s,
         _ => s.combine(&Sign::Neg),
     }
 }
 
 // See test case below that ensures this is correct with the current Allowed config
-fn get_target_ordering(axes: &Vec<Axis>) -> Vec<Axis> {
+fn get_target_ordering(axes: &Vec<Index>) -> Vec<Index> {
     let mut sorted = axes.clone();
     sorted.sort();
 
     match sorted[..] {
         // B
-        [Axis::Y, Axis::Z] => vec![Axis::Y, Axis::Z],
-        [Axis::X, Axis::Z] => vec![Axis::Z, Axis::X],
-        [Axis::X, Axis::Y] => vec![Axis::X, Axis::Y],
+        [Index::Two, Index::Three] => vec![Index::Two, Index::Three],
+        [Index::One, Index::Three] => vec![Index::Three, Index::One],
+        [Index::One, Index::Two] => vec![Index::One, Index::Two],
         // E
-        [Axis::T, Axis::X] => vec![Axis::T, Axis::X],
-        [Axis::T, Axis::Y] => vec![Axis::T, Axis::Y],
-        [Axis::T, Axis::Z] => vec![Axis::T, Axis::Z],
+        [Index::Zero, Index::One] => vec![Index::Zero, Index::One],
+        [Index::Zero, Index::Two] => vec![Index::Zero, Index::Two],
+        [Index::Zero, Index::Three] => vec![Index::Zero, Index::Three],
         // T
-        [Axis::T, Axis::Y, Axis::Z] => vec![Axis::T, Axis::Y, Axis::Z],
-        [Axis::T, Axis::X, Axis::Z] => vec![Axis::T, Axis::Z, Axis::X],
-        [Axis::T, Axis::X, Axis::Y] => vec![Axis::T, Axis::X, Axis::Y],
+        [Index::Zero, Index::Two, Index::Three] => vec![Index::Zero, Index::Two, Index::Three],
+        [Index::Zero, Index::One, Index::Three] => vec![Index::Zero, Index::Three, Index::One],
+        [Index::Zero, Index::One, Index::Two] => vec![Index::Zero, Index::One, Index::Two],
         // h, q
-        [Axis::X, Axis::Y, Axis::Z] => vec![Axis::X, Axis::Y, Axis::Z],
-        [Axis::T, Axis::X, Axis::Y, Axis::Z] => vec![Axis::T, Axis::X, Axis::Y, Axis::Z],
+        [Index::One, Index::Two, Index::Three] => vec![Index::One, Index::Two, Index::Three],
+        [Index::Zero, Index::One, Index::Two, Index::Three] => {
+            vec![Index::Zero, Index::One, Index::Two, Index::Three]
+        }
         // p, t & A have no ordering
         _ => axes.clone(),
     }
@@ -126,12 +111,9 @@ fn get_target_ordering(axes: &Vec<Axis>) -> Vec<Axis> {
 // This makes use of apply_metric above to determine sign changes when cancelling repeated
 // axes and starts from a positive sign. The return value of this function needs to be
 // combined with any accumulated sign changes to obtain the true sign.
-fn pop_and_cancel_repeated_axes(
-    i_component: Component,
-    j_component: Component,
-) -> (Sign, Vec<Axis>) {
-    let i_axes = i_component.as_vec();
-    let j_axes = j_component.as_vec();
+fn pop_and_cancel_repeated_indices(i_form: Form, j_form: Form) -> (Sign, Vec<Index>) {
+    let i_axes = i_form.as_vec();
+    let j_axes = j_form.as_vec();
     let mut sign = Sign::Pos;
 
     let mut axes = i_axes.clone();
@@ -171,7 +153,7 @@ fn pop_and_cancel_repeated_axes(
     return (sign, axes);
 }
 
-fn pop_to_correct_ordering(axes: &Vec<Axis>) -> (Sign, Vec<Axis>) {
+fn pop_to_correct_ordering(axes: &Vec<Index>) -> (Sign, Vec<Index>) {
     let target = get_target_ordering(&axes);
     let mut sign = Sign::Pos;
 
@@ -207,29 +189,29 @@ fn permuted_indices<T: Ord>(s1: &[T], s2: &[T]) -> Vec<u8> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algebra::{Alpha, Axis, Component, ALLOWED_ALPHA_COMPONENTS};
+    use crate::algebra::{Alpha, Form, Index, ALLOWED_ALPHA_FORMS, AR};
 
     #[test]
     fn target_ordering_is_always_correct_for_allowed() {
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let axes = c.as_vec();
             assert_eq!(get_target_ordering(&axes), axes);
         }
     }
 
     #[test]
-    fn maching_components_cancel_completely() {
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
-            let (_, axes) = pop_and_cancel_repeated_axes(c.clone(), *c);
+    fn maching_forms_cancel_completely() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
+            let (_, axes) = pop_and_cancel_repeated_indices(c.clone(), *c);
             assert_eq!(axes, vec![]);
         }
     }
 
     #[test]
     fn cancelling_repreats_never_leaves_duplicate_axes() {
-        for c1 in ALLOWED_ALPHA_COMPONENTS.iter() {
-            for c2 in ALLOWED_ALPHA_COMPONENTS.iter() {
-                let (_, mut axes) = pop_and_cancel_repeated_axes(*c1, *c2);
+        for c1 in ALLOWED_ALPHA_FORMS.iter() {
+            for c2 in ALLOWED_ALPHA_FORMS.iter() {
+                let (_, mut axes) = pop_and_cancel_repeated_indices(*c1, *c2);
                 axes.sort();
 
                 let mut deduped = axes.clone();
@@ -241,20 +223,20 @@ mod tests {
 
     #[test]
     fn swapping_axes_negates_when_not_squaring() {
-        let axes = vec![Axis::T, Axis::X, Axis::Y, Axis::Z];
+        let axes = vec![Index::Zero, Index::One, Index::Two, Index::Three];
         for i in axes.clone().iter() {
             for j in axes.iter() {
                 if i == j {
                     continue;
                 };
 
-                let a1 = Alpha::new(Sign::Pos, Component::Vector(*i)).unwrap();
-                let a2 = Alpha::new(Sign::Pos, Component::Vector(*j)).unwrap();
+                let a1 = Alpha::new(Sign::Pos, Form::Vector(*i)).unwrap();
+                let a2 = Alpha::new(Sign::Pos, Form::Vector(*j)).unwrap();
 
                 let res1 = ar_product(&a1, &a2);
                 let res2 = ar_product(&a2, &a1);
 
-                assert_eq!(res1.component(), res2.component());
+                assert_eq!(res1.form(), res2.form());
                 assert_ne!(res1.sign(), res2.sign());
             }
         }
@@ -262,13 +244,12 @@ mod tests {
 
     #[test]
     fn alphas_invert_through_ap() {
-        let ap = Alpha::new(Sign::Pos, Component::Point).unwrap();
+        let ap = Alpha::new(Sign::Pos, Form::Point).unwrap();
 
-        for c in ALLOWED_ALPHA_COMPONENTS.iter() {
+        for c in ALLOWED_ALPHA_FORMS.iter() {
             let alpha = Alpha::new(Sign::Pos, *c).unwrap();
-            let inv = invert_alpha(&alpha);
 
-            assert_eq!(ar_product(&alpha, &inv), ap);
+            assert_eq!(ar_product(&alpha, &alpha.inverse()), ap);
         }
     }
 }
