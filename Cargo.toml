@@ -11,11 +11,6 @@ Clifford Algebra based computation for the theory of Absolute Relativity.
 """
 edition = "2018"
 
-[[bin]]
-doc = false
-name = "aprod-demo"
-path = "src/bin/demo/main.rs"
-
 [dependencies]
 serde = "1.0.36"
 serde_json = "1.0"
@@ -23,3 +18,28 @@ serde_derive = "1.0.36"
 
 [dev-dependencies]
 test-case = "1.0"
+
+[[bin]]
+doc = false
+name = "aprod-demo"
+path = "src/bin/demo/main.rs"
+
+[[bin]]
+doc = false
+name = "inverse-fours"
+path = "src/bin/inverse_fours/main.rs"
+
+[[bin]]
+doc = false
+name = "zet-properties"
+path = "src/bin/zet_properties/main.rs"
+
+[[bin]]
+doc = false
+name = "force-equations"
+path = "src/bin/force-equations/main.rs"
+
+[[bin]]
+doc = false
+name = "forces-fields-momentum"
+path = "src/bin/ffm/main.rs"
